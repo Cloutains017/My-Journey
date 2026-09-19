@@ -201,3 +201,24 @@ a {
 .dark img {
   filter: brightness(0.9);
 }
+
+/* Keep the year index within the timeline's own layout. */
+.home-timeline { display: block; }
+.year-nav { position: sticky; top: 4rem; z-index: 30; background: var(--color-canvas); border-bottom: 1px solid var(--color-hairline); padding: 8px 0; }
+.year-nav-label { display: none; }
+.year-nav-list { display: flex; overflow-x: auto; gap: 4px; scrollbar-width: thin; scrollbar-color: var(--color-hairline) transparent; }
+.year-nav-link { flex-shrink: 0; min-height: 44px; padding: 10px 12px; border-bottom: 2px solid transparent; color: var(--color-muted); font-size: 13px; cursor: pointer; transition: color .2s, border-color .2s; }
+.year-nav-link:hover { color: var(--color-ink); }
+.year-nav-link[aria-current] { color: var(--color-primary); border-color: var(--color-primary); font-weight: 600; }
+.year-nav-link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+@media (min-width: 1024px) {
+  .home-timeline { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 48px; padding-top: 48px; }
+  .year-nav { top: 6rem; align-self: start; max-height: calc(100dvh - 8rem); overflow-y: auto; border-bottom: 0; border-left: 1px solid var(--color-hairline); padding: 0 0 0 12px; scrollbar-width: thin; }
+  .year-nav-label { display: block; font-size: 11px; letter-spacing: 2px; color: var(--color-muted); margin: 0 0 16px 10px; }
+  .year-nav-list { flex-direction: column; gap: 0; overflow: visible; }
+  .year-nav-link { text-align: left; border-bottom: 0; border-left: 2px solid transparent; min-height: 36px; padding: 8px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .home-journal [data-animate] { opacity: 1; animation: none; }
+}

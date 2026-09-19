@@ -23,12 +23,7 @@ export default function MilestoneMarker({ milestone }: { milestone: Milestone })
   const monthDay = milestone.date.slice(5);
 
   return (
-    <div className="relative md:ml-14 group">
-      {/* Timeline dot */}
-      <div className="hidden md:flex absolute left-[22px] top-6 -translate-x-1/2 z-10">
-        <div className="w-3 h-3 rounded-sm rotate-45 bg-accent-amber/60 ring-[5px] ring-canvas transition-all duration-500 group-hover:rotate-[135deg] group-hover:bg-accent-amber/80" />
-      </div>
-
+    <div className="relative group">
       {/* Milestone card */}
       <div className="relative overflow-hidden rounded-lg border border-hairline-soft hover:border-accent-amber/20 transition-colors duration-500">
         {/* Top accent stripe */}

@@ -52,12 +52,16 @@ export default async function HomePage() {
   const latestDate = tripList[0]?.date || "—";
 
   return (
-    <div>
-      <HeroMap trips={tripList} />
+    <div className="home-journal">
+      <div className="mx-auto max-w-7xl px-4 pt-5 sm:px-8 sm:pt-8">
+        <div className="relative isolate overflow-hidden rounded-2xl border border-hairline">
+          <HeroMap trips={tripList} />
+        </div>
+      </div>
 
       {/* Info section — below map */}
-      <div className="bg-canvas border-b border-hairline">
-        <div className="max-w-3xl mx-auto px-6 sm:px-8 py-12 sm:py-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8 sm:gap-4">
+      <div className="mx-auto max-w-5xl px-6 sm:px-8">
+        <div className="border-b border-hairline py-9 sm:py-12 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-7 sm:gap-4">
           <div>
             <p className="text-[11px] uppercase tracking-[4px] text-muted-soft mb-2 font-medium font-sans">
               Where I&apos;ve Been
@@ -88,13 +92,15 @@ export default async function HomePage() {
       </div>
 
       {/* Timeline section */}
-      <section className="max-w-3xl mx-auto px-6 sm:px-8 pt-16 pb-24">
+      <section className="home-timeline mx-auto max-w-5xl px-6 sm:px-8 pb-24" aria-label="旅程时间线">
+        <YearNav years={sortedYears} />
+        <div className="min-w-0">
         {/* Section header */}
-        <div className="text-center mb-16">
+        <div className="mb-10 pt-8 lg:pt-0">
           <p className="text-xs uppercase tracking-[5px] text-muted-soft mb-6 font-medium font-sans">
             旅 · 程 · 时 · 间 · 线
           </p>
-          <h2 className="font-display text-5xl sm:text-6xl font-normal tracking-[-1px] text-ink mb-5">
+          <h2 className="font-display text-4xl sm:text-5xl font-normal tracking-[-1px] text-ink mb-4">
             来日方长
           </h2>
           <p className="text-sm sm:text-base text-muted leading-relaxed font-sans">
@@ -102,33 +108,20 @@ export default async function HomePage() {
           </p>
         </div>
 
-        {/* Year navigation sidebar */}
-        <YearNav years={sortedYears} />
-
         <div className="relative">
-          {/* Vertical timeline line */}
-          <div
-            className="absolute left-[22px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-hairline via-hairline-soft to-transparent hidden md:block"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(to bottom, var(--color-hairline-soft) 0px, var(--color-hairline-soft) 4px, transparent 4px, transparent 12px)",
-            }}
-          />
 
           <div className="flex flex-col gap-10">
             {sortedYears.map((year, yi) => {
               const yearItems = yearGroups.get(year)!;
 
               return (
-                <div key={year} id={`year-${year}`} className="scroll-mt-24">
+                <div key={year} id={`year-${year}`} className="scroll-mt-36 lg:scroll-mt-24">
                   {/* Year divider */}
-                  <div className="flex items-center gap-4 mb-10 md:ml-14">
-                    <div className="hidden md:block w-3 h-3 rounded-full bg-primary ring-4 ring-canvas flex-shrink-0" />
-                    <span className="font-display text-6xl font-normal text-primary tracking-[-1px] select-none leading-none tabular-nums">
+                  <div className="flex items-center gap-4 mb-6 border-b border-hairline pb-5">
+                    <span className="font-display text-4xl font-normal text-primary tracking-[-1px] select-none leading-none tabular-nums">
                       {year}
                     </span>
                     <span className="font-display text-xl font-normal text-primary/30 select-none leading-none mt-1">年</span>
-                    <div className="flex-1 h-px ml-2 bg-gradient-to-r from-primary/25 via-primary/10 to-transparent" />
                   </div>
 
                   <div className="flex flex-col gap-6">
@@ -157,6 +150,7 @@ export default async function HomePage() {
             还没有旅程记录，开始你的第一段旅程吧。
           </p>
         )}
+        </div>
       </section>
     </div>
   );

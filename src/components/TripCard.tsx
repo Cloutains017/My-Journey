@@ -14,16 +14,11 @@ const PinIcon = () => (
 export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount: number }) {
 
   return (
-    <Link href={`/trip/${trip.slug}`} className="group block relative">
-      {/* Timeline dot — desktop only */}
-      <div className="hidden md:flex absolute left-[22px] top-9 -translate-x-1/2 z-10">
-        <div className="w-2.5 h-2.5 rounded-full bg-hairline border-2 border-canvas group-hover:bg-primary group-hover:scale-125 transition-all duration-300" />
-      </div>
-
-      <article className="flex flex-col sm:flex-row gap-0 sm:gap-5 md:gap-7 p-4 sm:p-5 md:pl-14 rounded-xl bg-surface-card border border-hairline-soft group-hover:border-primary/20 transition-colors duration-500">
-        <div className="relative w-full h-40 sm:w-[130px] sm:h-[100px] md:w-[170px] md:h-[130px] rounded-lg overflow-hidden flex-shrink-0 bg-surface-cream-strong">
+    <Link href={`/trip/${trip.slug}`} className="group block relative rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+      <article className="flex flex-col sm:flex-row gap-0 sm:gap-6 py-5 border-b border-hairline-soft group-hover:border-primary/40 transition-colors duration-300">
+        <div className="relative w-full aspect-[16/10] sm:aspect-auto sm:w-[180px] sm:h-[140px] rounded-lg overflow-hidden flex-shrink-0 bg-surface-cream-strong">
           {trip.cover_image ? (
-            <TravelImage src={trip.cover_image} alt={trip.title} fill sizes="(max-width: 639px) calc(100vw - 80px), (max-width: 767px) 130px, 170px" className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+            <TravelImage src={trip.cover_image} alt={trip.title} fill sizes="(max-width: 639px) calc(100vw - 48px), 180px" className="object-cover motion-safe:group-hover:scale-105 transition-transform duration-500 ease-out" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-surface-cream-strong text-2xl">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2L2 22h20L12 2z" opacity="0.3" /></svg>
@@ -37,7 +32,7 @@ export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount:
               <span className="text-xs text-muted font-sans">{formatDateRange(trip.date, trip.end_date)}</span>
               <RatingBadge rating={trip.rating} />
             </div>
-            <h3 className="text-lg font-semibold font-display text-ink mb-1.5 truncate group-hover:text-primary transition-colors">
+            <h3 className="text-xl font-normal font-display text-ink mb-2 break-words group-hover:text-primary transition-colors">
               {trip.title}
             </h3>
             {trip.location && (
@@ -51,7 +46,7 @@ export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount:
           </div>
           <div className="flex items-center gap-4 mt-3">
             <p className="text-xs text-muted-soft font-sans">{photoCount} 张照片</p>
-            <span className="text-xs text-primary/0 group-hover:text-primary transition-all ml-auto font-medium font-sans">
+            <span className="text-xs text-primary ml-auto font-medium font-sans">
               查看详情 →
             </span>
           </div>

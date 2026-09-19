@@ -31,57 +31,31 @@ export default function YearNav({ years }: YearNavProps) {
   }, [years]);
 
   function scrollTo(year: number) {
-    const el = document.getElementById(`year-${year}`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      setActiveYear(year);
-    }
+    document.getElementById(`year-${year}`)?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      block: "start",
+    });
+    setActiveYear(year);
   }
 
   if (years.length <= 1) return null;
 
   return (
-    <>
-      {/* Desktop sidebar */}
-      <nav className="hidden lg:block fixed left-[max(16px,calc((100vw-56rem)/2-200px))] top-32 z-20">
-        <div className="flex flex-col gap-1 p-3 rounded-xl bg-canvas border border-hairline shadow-sm">
-          <p className="text-[10px] uppercase tracking-[3px] text-muted-soft px-2 pb-2 font-medium font-sans">
-            年份
-          </p>
-          {years.map((year) => (
-            <button
-              key={year}
-              onClick={() => scrollTo(year)}
-              className={`text-left px-3 py-1.5 rounded-lg text-sm transition-all font-sans ${
-                activeYear === year
-                  ? "bg-surface-card text-ink font-semibold"
-                  : "text-muted hover:text-ink hover:bg-surface-soft"
-              }`}
-            >
-              {year}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      {/* Mobile horizontal scroll bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-canvas/90 backdrop-blur-lg border-t border-hairline px-4 py-2">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {years.map((year) => (
-            <button
-              key={year}
-              onClick={() => scrollTo(year)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all font-sans flex-shrink-0 ${
-                activeYear === year
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted hover:text-ink bg-surface-soft"
-              }`}
-            >
-              {year}
-            </button>
-          ))}
-        </div>
+    <nav className="year-nav" aria-label="按年份浏览旅程">
+      <p className="year-nav-label">沿着年份</p>
+      <div className="year-nav-list">
+        {years.map((year) => (
+          <button
+            type="button"
+            key={year}
+            onClick={() => scrollTo(year)}
+            aria-current={activeYear === year ? "date" : undefined}
+            className="year-nav-link"
+          >
+            {year}
+          </button>
+        ))}
       </div>
-    </>
+    </nav>
   );
 }
