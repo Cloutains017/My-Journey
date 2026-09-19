@@ -10,7 +10,9 @@
     "lint": "eslint",
     "test": "node --test tests/*.test.ts",
     "design:check": "impeccable detect src/",
-    "migrate": "tsx scripts/migrate-to-r2.ts"
+    "city-boundaries:fetch": "tsx scripts/fetch-city-boundaries.ts",
+    "r2:configure-cors": "tsx scripts/setup-r2-cors.ts",
+    "r2:stats": "tsx scripts/check-r2-stats.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1060.0",
