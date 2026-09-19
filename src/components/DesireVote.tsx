@@ -51,7 +51,7 @@ export default function DesireVote({ tripId }: { tripId: string }) {
       <p className="text-sm text-muted mb-5 font-sans">选择你的心动指数</p>
 
       {/* Spectrum bar: left=strong desire(primary), right=weak desire(muted) */}
-      <div className="relative h-2 rounded-full bg-gradient-to-r from-primary/40 via-accent-amber/30 to-muted-soft/30 mb-5">
+      <div className="relative h-2 rounded-full bg-gradient-to-r from-accent-teal/40 via-surface-card to-primary/40 mb-5">
         {desire && (
           <div
             className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-ink border-2 border-canvas shadow-sm transition-all duration-300"

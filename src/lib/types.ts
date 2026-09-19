@@ -69,11 +69,11 @@ export const AGREEMENT_LABELS: Record<number, string> = {
 };
 
 export const DESIRE_LABELS: Record<number, string> = {
-  1: "我要马上出发",
-  2: "有点想去",
-  3: "考虑一下",
-  4: "很一般啊",
-  5: "狗都不去",
+  1: "心驰神往",
+  2: "颇为向往",
+  3: "尚在考虑",
+  4: "兴致平平",
+  5: "永不踏足",
 };
 
 export interface Milestone {
