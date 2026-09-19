@@ -2,22 +2,7 @@
 
 import { useState } from "react";
 import { AGREEMENT_LABELS } from "@/lib/types";
-
-const COLORS: Record<number, string> = {
-  1: "bg-accent-teal/10 border-accent-teal/30 text-accent-teal",
-  2: "bg-accent-teal/5 border-accent-teal/15 text-accent-teal/80",
-  3: "bg-surface-card border-hairline text-muted",
-  4: "bg-accent-amber/5 border-accent-amber/20 text-accent-amber",
-  5: "bg-primary/10 border-primary/30 text-primary",
-};
-
-const ACTIVE: Record<number, string> = {
-  1: "bg-accent-teal/20 border-accent-teal/60 text-accent-teal ring-1 ring-accent-teal/30",
-  2: "bg-accent-teal/15 border-accent-teal/40 text-accent-teal/90",
-  3: "bg-surface-cream-strong border-hairline text-ink ring-1 ring-hairline",
-  4: "bg-accent-amber/15 border-accent-amber/40 text-accent-amber",
-  5: "bg-primary/20 border-primary/60 text-primary ring-1 ring-primary/30",
-};
+import { ACTIVE_VOTE_COLORS, VOTE_COLORS } from "@/components/voteStyles";
 
 export default function AgreementVote({ tripId }: { tripId: string }) {
   const [agreement, setAgreement] = useState<number | null>(null);
@@ -66,7 +51,7 @@ export default function AgreementVote({ tripId }: { tripId: string }) {
             key={v}
             type="button"
             onClick={() => setAgreement(v)}
-            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all cursor-pointer font-sans ${COLORS[v]} ${agreement === v ? ACTIVE[v] : ""}`}
+            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all cursor-pointer font-sans ${VOTE_COLORS[v]} ${agreement === v ? ACTIVE_VOTE_COLORS[v] : ""}`}
           >
             {AGREEMENT_LABELS[v]}
           </button>

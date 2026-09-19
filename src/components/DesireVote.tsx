@@ -2,22 +2,7 @@
 
 import { useState } from "react";
 import { DESIRE_LABELS } from "@/lib/types";
-
-const COLORS: Record<number, string> = {
-  1: "bg-primary/10 border-primary/30 text-primary",
-  2: "bg-accent-amber/5 border-accent-amber/20 text-accent-amber",
-  3: "bg-surface-card border-hairline text-muted",
-  4: "bg-surface-card border-hairline text-muted",
-  5: "bg-surface-soft border-hairline-soft text-muted-soft",
-};
-
-const ACTIVE: Record<number, string> = {
-  1: "bg-primary/20 border-primary/60 text-primary ring-1 ring-primary/30",
-  2: "bg-accent-amber/15 border-accent-amber/40 text-accent-amber",
-  3: "bg-surface-cream-strong border-hairline text-ink ring-1 ring-hairline",
-  4: "bg-surface-cream-strong border-hairline text-ink ring-1 ring-hairline",
-  5: "bg-hairline border-hairline text-muted-soft",
-};
+import { ACTIVE_VOTE_COLORS, VOTE_COLORS } from "@/components/voteStyles";
 
 export default function DesireVote({ tripId }: { tripId: string }) {
   const [desire, setDesire] = useState<number | null>(null);
@@ -66,7 +51,7 @@ export default function DesireVote({ tripId }: { tripId: string }) {
             key={v}
             type="button"
             onClick={() => setDesire(v)}
-            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all cursor-pointer font-sans ${COLORS[v]} ${desire === v ? ACTIVE[v] : ""}`}
+            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all cursor-pointer font-sans ${VOTE_COLORS[v]} ${desire === v ? ACTIVE_VOTE_COLORS[v] : ""}`}
           >
             {DESIRE_LABELS[v]}
           </button>
