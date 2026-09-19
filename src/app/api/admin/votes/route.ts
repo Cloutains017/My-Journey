@@ -1,11 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { checkAuth } from "@/lib/admin-auth";
 
-async function checkAuth() {
-  const cookieStore = await cookies();
-  return cookieStore.get("admin_token")?.value === "authenticated";
-}
 
 export async function GET() {
   if (!(await checkAuth())) return NextResponse.json({ error: "未授权" }, { status: 401 });

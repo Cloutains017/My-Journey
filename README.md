@@ -65,7 +65,18 @@ CLOUDFLARE_R2_PUBLIC_URL=
 
 # 管理后台
 ADMIN_PASSWORD=
+# 可选：独立的随机会话签名密钥（建议至少 32 字节）
+ADMIN_SESSION_SECRET=
 ```
+
+## 检查与安全说明
+
+- 使用 Node.js 22.18+ 或 24 运行测试：`npm test`。
+- 本机服务启动后，可运行接口回归测试（PowerShell）：`$env:ADMIN_TEST_BASE_URL="http://127.0.0.1:3007"; npm test`。使用 `.env.local` 的密码验证登录，其他请求只测试未授权状态，不修改数据。
+- 代码检查：`npm run lint`；类型检查：`npx tsc --noEmit`；生产构建：`npm run build`。
+- 后台使用带 HMAC 签名的 24 小时会话，服务端验证签名与有效期。旧版登录 Cookie 会失效，需要重新登录。
+- `ADMIN_PASSWORD` 必须设置为强随机密码。可配置独立的 `ADMIN_SESSION_SECRET`；未配置时由管理密码派生签名密钥。修改密码或签名密钥后，已有会话失效。
+- R2 与旧 Supabase 照片通过 Next.js Image 按显示尺寸加载；灯箱保留原图。图片来源严格限定为配置的存储地址，其他外链封面按原地址显示。修改存储地址后需要重新构建。
 
 ## 项目结构
 

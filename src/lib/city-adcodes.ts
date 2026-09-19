@@ -422,7 +422,7 @@ export function lookupAdcode(cityName: string): string | undefined {
 
   // Try stripping compound administrative suffixes (longer/more specific first)
   // e.g. "阿坝藏族羌族自治州" → "阿坝", "湘西土家族苗族自治州" → "湘西"
-  let stripped = cityName
+  const stripped = cityName
     .replace(/土家族苗族自治州$/, "")
     .replace(/蒙古族藏族自治州$/, "")
     .replace(/藏族羌族自治州$/, "")

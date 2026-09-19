@@ -1,13 +1,9 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { r2Delete, r2GetKeyFromUrl } from "@/lib/r2";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { checkAuth } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
 
-async function checkAuth() {
-  const cookieStore = await cookies();
-  return cookieStore.get("admin_token")?.value === "authenticated";
-}
 
 export async function DELETE(
   request: Request,
@@ -21,7 +17,8 @@ export async function DELETE(
     .from("photos")
     .select("url, trips(slug)")
     .eq("id", id)
-    .single();
+    .single()
+    .overrideTypes<{ url: string; trips: { slug: string } | null }>();
 
   if (photo?.url) {
     try {
@@ -38,9 +35,10 @@ export async function DELETE(
   const { error } = await supabaseAdmin.from("photos").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  if ((photo as any)?.trips?.slug) {
-    revalidatePath(`/trip/${(photo as any).trips.slug}`);
+  if (photo?.trips?.slug) {
+    revalidatePath(`/trip/${photo.trips.slug}`);
   }
 
+  revalidatePath("/");
   return NextResponse.json({ success: true });
 }

@@ -2,12 +2,8 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { lookupAdcode } from "@/lib/city-adcodes";
 import { dissolveDistricts, buildGeometry } from "@/lib/geo-utils";
-import { cookies } from "next/headers";
+import { checkAuth } from "@/lib/admin-auth";
 
-async function checkAuth() {
-  const cookieStore = await cookies();
-  return cookieStore.get("admin_token")?.value === "authenticated";
-}
 
 /**
  * Fetch and merge all district boundaries for a given adcode from DataV.
@@ -36,7 +32,8 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    let { cityName, adcode } = body;
+    const { cityName } = body;
+    let { adcode } = body;
 
     if (!cityName) {
       return NextResponse.json({ error: "cityName is required" }, { status: 400 });
@@ -68,7 +65,7 @@ export async function POST(request: Request) {
     const geometry = await fetchCityBoundary(adcode);
 
     // Store in Supabase
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from("city_boundaries")
       .insert({
         name: cityName,
@@ -88,7 +85,7 @@ export async function POST(request: Request) {
         properties: { name: cityName, adcode, dynamic: true },
       },
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "无法保存城市边界" }, { status: 500 });
   }
 }

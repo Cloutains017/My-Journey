@@ -1,14 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { checkAuth } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
 import { lookupAdcode } from "@/lib/city-adcodes";
 import { dissolveDistricts, buildGeometry } from "@/lib/geo-utils";
 
-async function checkAuth() {
-  const cookieStore = await cookies();
-  return cookieStore.get("admin_token")?.value === "authenticated";
-}
 
 function generateSlug(title: string, date?: string): string {
   const ascii = title
@@ -62,8 +58,8 @@ async function ensureCityBoundary(cityName: string) {
       const { join } = await import("node:path");
       const staticPath = join(process.cwd(), "public", "data", "city-boundaries.json");
       const raw = await fs.readFile(staticPath, "utf-8");
-      const data = JSON.parse(raw);
-      if (data.features?.some((f: any) => f.properties?.name === cityName)) return;
+      const data: { features?: { properties?: { name?: string } }[] } = JSON.parse(raw);
+      if (data.features?.some((f) => f.properties?.name === cityName)) return;
     } catch { /* static file might not exist */ }
 
     // Fetch from DataV (_full for prefecture, bare for county-level)

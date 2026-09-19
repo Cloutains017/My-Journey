@@ -1,12 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { checkAuth } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
 
-async function checkAuth() {
-  const cookieStore = await cookies();
-  return cookieStore.get("admin_token")?.value === "authenticated";
-}
 
 function generateSlug(title: string, date?: string): string {
   const ascii = title

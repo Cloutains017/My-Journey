@@ -1,3 +1,4 @@
+import type { Feature, FeatureCollection, Polygon, MultiPolygon } from "geojson";
 /**
  * Fetches city boundary GeoJSON from Alibaba DataV API and combines them
  * into a single file for the map component.
@@ -110,7 +111,7 @@ function simplifyRing(
   return [first, last];
 }
 
-function simplifyGeometry(geometry: any, tolerance: number): any {
+function simplifyGeometry(geometry: Polygon | MultiPolygon, tolerance: number): Polygon | MultiPolygon {
   if (geometry.type === "Polygon") {
     return {
       ...geometry,
@@ -134,7 +135,7 @@ function simplifyGeometry(geometry: any, tolerance: number): any {
 // Merge multiple district features into a single geometry using dissolve,
 // which dissolves internal boundaries between adjacent polygons.
 // ---------------------------------------------------------------------------
-function unionFeatures(features: any[]): any {
+function unionFeatures(features: Feature<Polygon | MultiPolygon>[]): Polygon | MultiPolygon {
   const coords = dissolveDistricts(features);
   return buildGeometry(coords);
 }
@@ -147,7 +148,7 @@ async function main() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 
-  const features: any[] = [];
+  const features: Feature<Polygon | MultiPolygon>[] = [];
   const tolerance = 0.006; // ~600m at equator, good balance for city-level zoom
 
   for (const name of PRE_FETCH_CITIES) {
@@ -159,7 +160,7 @@ async function main() {
     console.log(`Fetching ${name} (${adcode})...`);
 
     // Try _full first (for prefecture-level cities), fall back to bare adcode (for county-level units)
-    let geo: any;
+    let geo: FeatureCollection<Polygon | MultiPolygon>;
     let url = `https://geo.datav.aliyun.com/areas_v3/bound/geojson?code=${adcode}_full`;
     let res = await fetch(url);
     if (!res.ok) {
@@ -187,7 +188,7 @@ async function main() {
       const unified = unionFeatures(districtFeatures);
       const simplified = simplifyGeometry(unified, tolerance);
 
-      const feature = {
+      const feature: Feature<Polygon | MultiPolygon> = {
         type: "Feature",
         geometry: simplified,
         properties: {
@@ -199,8 +200,8 @@ async function main() {
 
       features.push(feature);
       console.log(`  OK — ${districtFeatures.length} districts → union (${unified.type}), ${JSON.stringify(simplified).length} chars`);
-    } catch (err: any) {
-      console.error(`  Error: ${err.message}`);
+    } catch (err) {
+      console.error(`  Error: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

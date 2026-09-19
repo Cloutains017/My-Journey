@@ -16,16 +16,20 @@ const MILESTONES: Milestone[] = [
 ];
 
 type TimelineItem =
-  | { kind: "trip"; data: Trip }
+  | { kind: "trip"; data: Trip & { photo_count: number } }
   | { kind: "milestone"; data: Milestone };
 
 export default async function HomePage() {
-  const { data: trips } = await supabase
+  const { data: trips, error } = await supabase
     .from("trips")
-    .select("*")
+    .select("*, photos(count)")
     .order("date", { ascending: false });
 
-  const tripList = (trips as Trip[]) || [];
+  if (error) throw new Error("暂时无法加载旅程，请稍后重试");
+  const tripList = (trips || []).map((row) => {
+    const { photos, ...trip } = row as Omit<Trip, "photos"> & { photos: { count: number }[] };
+    return { ...trip, photo_count: photos[0]?.count ?? 0 };
+  });
 
   // Merge trips + milestones into unified timeline
   const items: TimelineItem[] = [
@@ -131,7 +135,7 @@ export default async function HomePage() {
                     {yearItems.map((item, index) =>
                       item.kind === "trip" ? (
                         <div key={item.data.id} data-animate style={{ animationDelay: `${index * 0.08}s` }}>
-                          <TripCard trip={item.data} index={index} />
+                          <TripCard trip={item.data} photoCount={item.data.photo_count} />
                         </div>
                       ) : (
                         <div key={item.data.id} data-animate style={{ animationDelay: `${index * 0.08}s` }}>

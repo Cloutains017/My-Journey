@@ -81,8 +81,8 @@ async function main() {
         console.log(`  -> OK: ${newUrl}`);
         migrated++;
       }
-    } catch (e: any) {
-      console.log(`  -> ERROR: ${e.message}`);
+    } catch (e) {
+      console.log(`  -> ERROR: ${e instanceof Error ? e.message : String(e)}`);
       failed++;
     }
   }

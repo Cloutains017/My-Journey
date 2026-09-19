@@ -2,23 +2,23 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Photo } from "@/lib/types";
+import TravelImage from "@/components/TravelImage";
 
 export default function PhotoGallery({ photos }: { photos: Photo[] }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  if (photos.length === 0) return null;
 
   const goNext = useCallback(() => {
-    setLightboxIndex((i) => (i !== null ? (i + 1) % photos.length : null));
+    setLightboxIndex((i) => (i !== null && photos.length > 0 ? (i + 1) % photos.length : null));
   }, [photos.length]);
 
   const goPrev = useCallback(() => {
-    setLightboxIndex((i) => (i !== null ? (i - 1 + photos.length) % photos.length : null));
+    setLightboxIndex((i) => (i !== null && photos.length > 0 ? ((i % photos.length) - 1 + photos.length) % photos.length : null));
   }, [photos.length]);
 
   const close = useCallback(() => setLightboxIndex(null), []);
 
   useEffect(() => {
-    if (lightboxIndex === null) return;
+    if (lightboxIndex === null || photos.length === 0) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "ArrowRight") goNext();
       else if (e.key === "ArrowLeft") goPrev();
@@ -26,7 +26,12 @@ export default function PhotoGallery({ photos }: { photos: Photo[] }) {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxIndex, goNext, goPrev, close]);
+  }, [lightboxIndex, photos.length, goNext, goPrev, close]);
+
+  if (photos.length === 0) return null;
+
+  const activeIndex = lightboxIndex === null ? null : lightboxIndex % photos.length;
+  const activePhoto = activeIndex === null ? null : photos[activeIndex];
 
   return (
     <div className="mb-12">
@@ -37,13 +42,18 @@ export default function PhotoGallery({ photos }: { photos: Photo[] }) {
         {photos.map((photo, i) => (
           <button
             key={photo.id}
+            type="button"
+            aria-label={`查看第 ${i + 1} 张照片${photo.caption ? `：${photo.caption}` : ""}`}
             onClick={() => setLightboxIndex(i)}
             className="relative block mb-3 rounded-lg overflow-hidden bg-surface-cream-strong hover:ring-2 hover:ring-primary/30 transition-all cursor-pointer break-inside-avoid group"
           >
-            <img
+            <TravelImage
               src={photo.url}
               alt={photo.caption || ""}
-              className="w-full object-cover hover:scale-[1.02] transition-transform duration-500"
+              width={photo.width || 1200}
+              height={photo.height || 800}
+              sizes="(max-width: 767px) calc((100vw - 76px) / 2), 227px"
+              className="w-full h-auto object-cover hover:scale-[1.02] transition-transform duration-500"
               loading="lazy"
             />
             {photo.caption && (
@@ -55,14 +65,18 @@ export default function PhotoGallery({ photos }: { photos: Photo[] }) {
         ))}
       </div>
 
-      {lightboxIndex !== null && (
+      {activePhoto && (
         <div
           className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer animate-fade-in"
           onClick={close}
         >
-          <img
-            src={photos[lightboxIndex].url}
-            alt=""
+          <TravelImage
+            src={activePhoto.url}
+            alt={activePhoto.caption || "旅途照片"}
+            width={activePhoto.width || 1200}
+            height={activePhoto.height || 800}
+            unoptimized
+            style={{ width: "auto", height: "auto" }}
             className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           />
@@ -105,7 +119,7 @@ export default function PhotoGallery({ photos }: { photos: Photo[] }) {
           {/* Counter */}
           {photos.length > 1 && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-sm font-sans">
-              {lightboxIndex + 1} / {photos.length}
+              {(activeIndex ?? 0) + 1} / {photos.length}
             </div>
           )}
         </div>

@@ -1,12 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { checkAuth } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
 
-async function checkAuth() {
-  const cookieStore = await cookies();
-  return cookieStore.get("admin_token")?.value === "authenticated";
-}
 
 export async function DELETE(
   request: Request,
@@ -19,13 +15,14 @@ export async function DELETE(
     .from("agreement_votes")
     .select("trip_id, trips(slug)")
     .eq("id", id)
-    .single();
+    .single()
+    .overrideTypes<{ trip_id: string; trips: { slug: string } | null }>();
 
   const { error } = await supabaseAdmin.from("agreement_votes").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  if ((vote as any)?.trips?.slug) {
-    revalidatePath(`/trip/${(vote as any).trips.slug}`);
+  if (vote?.trips?.slug) {
+    revalidatePath(`/trip/${vote.trips.slug}`);
   }
 
   return NextResponse.json({ success: true });

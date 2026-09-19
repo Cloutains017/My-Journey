@@ -1,14 +1,9 @@
 // ---------------------------------------------------------------------------
 // Minimal GeoJSON types (no external dependency needed)
 // ---------------------------------------------------------------------------
-export interface GeoJSONFeature {
-  type: "Feature";
-  properties: Record<string, any>;
-  geometry: {
-    type: "Polygon" | "MultiPolygon";
-    coordinates: any;
-  };
-}
+import type { Feature, Polygon, MultiPolygon } from "geojson";
+
+export type GeoJSONFeature = Feature<Polygon | MultiPolygon, Record<string, unknown>>;
 
 export interface FeatureCollection {
   type: "FeatureCollection";

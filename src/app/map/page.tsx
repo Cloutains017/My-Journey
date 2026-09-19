@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import TravelImage from "@/components/TravelImage";
+import type L from "leaflet";
 import { supabase } from "@/lib/supabase";
 import type { Trip } from "@/lib/types";
 import { formatDateRange, RATING_LABELS } from "@/lib/types";
@@ -42,8 +44,8 @@ async function loadBoundaries(): Promise<FeatureCollection | null> {
 
 export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const layersRef = useRef<any[]>([]);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const layersRef = useRef<L.Layer[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [mapReady, setMapReady] = useState(false);
 
@@ -300,7 +302,7 @@ export default function MapPage() {
           >
             <div className="w-10 h-10 rounded-lg bg-surface-cream-strong flex-shrink-0 overflow-hidden">
               {trip.cover_image && (
-                <img src={trip.cover_image} alt="" className="w-full h-full object-cover" />
+                <TravelImage src={trip.cover_image} alt="" width={40} height={40} className="w-full h-full object-cover" />
               )}
             </div>
             <div className="min-w-0">

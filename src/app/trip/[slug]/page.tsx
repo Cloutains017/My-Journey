@@ -1,4 +1,5 @@
 import Link from "next/link";
+import TravelImage from "@/components/TravelImage";
 import { supabase } from "@/lib/supabase";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
 import { formatDateRange } from "@/lib/types";
@@ -15,7 +16,7 @@ export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const { data: trips } = await supabase.from("trips").select("slug");
-  return (trips || []).map((t: any) => ({ slug: t.slug }));
+  return (trips || []).map((t) => ({ slug: t.slug }));
 }
 
 function renderContent(content: string) {
@@ -71,7 +72,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
       {/* Cover hero - magazine style */}
       <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden">
         {t.cover_image ? (
-          <img src={t.cover_image} alt={t.title} className="w-full h-full object-cover scale-105" />
+          <TravelImage src={t.cover_image} alt={t.title} fill sizes="100vw" preload className="object-cover scale-105" />
         ) : (
           <div className="w-full h-full bg-surface-cream-strong flex items-center justify-center">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-surface-cream-strong">

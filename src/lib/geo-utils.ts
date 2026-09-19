@@ -1,6 +1,6 @@
 import dissolve from "@turf/dissolve";
 import { polygon as turfPolygon, featureCollection } from "@turf/helpers";
-import type { FeatureCollection, Polygon, MultiPolygon } from "geojson";
+import type { Feature, Polygon, MultiPolygon } from "geojson";
 
 /**
  * Dissolve a collection of district/area features into a single geometry
@@ -8,9 +8,9 @@ import type { FeatureCollection, Polygon, MultiPolygon } from "geojson";
  * Disjoint areas (islands) are preserved as a MultiPolygon.
  */
 export function dissolveDistricts(
-  features: Array<{ geometry: { type: string; coordinates: any } }>,
+  features: Array<{ geometry: Polygon | MultiPolygon }>,
 ): Polygon["coordinates"] | MultiPolygon["coordinates"] {
-  const turfFeatures: any[] = [];
+  const turfFeatures: Feature<Polygon>[] = [];
 
   for (const feature of features) {
     const geom = feature.geometry;
@@ -37,10 +37,9 @@ export function dissolveDistricts(
     const dissolved = dissolve(featureCollection(turfFeatures));
     if (dissolved?.features?.length) {
       // Combine all dissolved features (handles disjoint parts like enclaves)
-      const allCoords: any[] = [];
+      const allCoords: Polygon["coordinates"][] = [];
       for (const f of dissolved.features) {
         if (f.geometry.type === "Polygon") allCoords.push(f.geometry.coordinates);
-        else if (f.geometry.type === "MultiPolygon") allCoords.push(...f.geometry.coordinates);
       }
       if (allCoords.length === 1) return allCoords[0]; // single Polygon
       return allCoords; // MultiPolygon
@@ -50,10 +49,9 @@ export function dissolveDistricts(
   }
 
   // Fallback: simple MultiPolygon concatenation (keeps internal borders)
-  const allCoords: any[] = [];
+  const allCoords: Polygon["coordinates"][] = [];
   for (const f of turfFeatures) {
     if (f.geometry.type === "Polygon") allCoords.push(f.geometry.coordinates);
-    else if (f.geometry.type === "MultiPolygon") allCoords.push(...f.geometry.coordinates);
   }
   return allCoords;
 }
@@ -61,7 +59,7 @@ export function dissolveDistricts(
 /** Build a GeoJSON geometry object from dissolved coordinates */
 export function buildGeometry(
   coords: Polygon["coordinates"] | MultiPolygon["coordinates"],
-): object {
+): Polygon | MultiPolygon {
   if (coords.length === 0) return { type: "MultiPolygon", coordinates: [] };
   // If first element is a single ring (outer ring of a Polygon)
   if (Array.isArray(coords[0]?.[0]?.[0])) {

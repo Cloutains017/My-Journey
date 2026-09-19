@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import TravelImage from "@/components/TravelImage";
 import { RATING_LABELS, AGREEMENT_LABELS, DESIRE_LABELS, formatDateRange } from "@/lib/types";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
 
@@ -11,11 +12,12 @@ export default function AdminClient() {
   const [editing, setEditing] = useState<Partial<Trip> | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photoRows, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [manageMode, setManageMode] = useState(false);
   const [commentsMode, setCommentsMode] = useState(false);
   const [comments, setComments] = useState<{ agreements: (AgreementVote & { trips?: { title: string } | null })[], desires: (DesireVote & { trips?: { title: string } | null })[] }>({ agreements: [], desires: [] });
+  const photos = photoRows.filter((photo) => photo.trip_id === editing?.id);
+  const editingId = editing?.id;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleLogin(e: React.FormEvent) {
@@ -25,8 +27,8 @@ export default function AdminClient() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     });
-    if (res.ok) { setAuthenticated(true); setError(""); }
-    else setError("密码错误");
+    if (res.ok) { setAuthenticated(true); setPassword(""); setError(""); }
+    else { const data = await res.json(); setError(data.error || "登录失败"); }
   }
 
   const fetchTrips = useCallback(async () => {
@@ -35,7 +37,17 @@ export default function AdminClient() {
     else setAuthenticated(false);
   }, []);
 
-  useEffect(() => { if (authenticated) fetchTrips(); }, [authenticated, fetchTrips]);
+  useEffect(() => {
+    if (!authenticated) return;
+    const controller = new AbortController();
+    fetch("/api/admin/trips", { cache: "no-store", signal: controller.signal })
+      .then(async (res) => {
+        if (res.ok) { const data = await res.json(); if (!controller.signal.aborted) setTrips(data); }
+        else if (res.status === 401) setAuthenticated(false);
+        else setError("加载旅程失败");
+      }).catch(() => { if (!controller.signal.aborted) setError("加载旅程失败"); });
+    return () => controller.abort();
+  }, [authenticated]);
 
   const fetchPhotos = useCallback(async (tripId: string) => {
     const { supabase } = await import("@/lib/supabase");
@@ -44,9 +56,20 @@ export default function AdminClient() {
   }, []);
 
   useEffect(() => {
-    if (editing?.id) fetchPhotos(editing.id);
-    else setPhotos([]);
-  }, [editing, fetchPhotos]);
+    if (!editingId) return;
+    let cancelled = false;
+    async function loadPhotos() {
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data, error } = await supabase.from("photos").select("*").eq("trip_id", editingId!).order("sort_order");
+        if (cancelled) return;
+        if (error) setError("加载照片失败");
+        else setPhotos((data || []) as Photo[]);
+      } catch { if (!cancelled) setError("加载照片失败"); }
+    }
+    void loadPhotos();
+    return () => { cancelled = true; };
+  }, [editingId]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +89,6 @@ export default function AdminClient() {
       fetchTrips();
       if (isNew && saved?.id) {
         setEditing({ ...editing, id: saved.id });
-        setManageMode(true);
       } else {
         setEditing(null);
       }
@@ -131,8 +153,8 @@ export default function AdminClient() {
 
       setMessage(`照片上传成功 · ${publicUrls.length} 张`);
       fetchPhotos(editing.id);
-    } catch (err: any) {
-      setError(err.message || "上传失败");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "上传失败");
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -156,7 +178,17 @@ export default function AdminClient() {
     else setAuthenticated(false);
   }, []);
 
-  useEffect(() => { if (authenticated && commentsMode) fetchComments(); }, [authenticated, commentsMode, fetchComments]);
+  useEffect(() => {
+    if (!authenticated || !commentsMode) return;
+    const controller = new AbortController();
+    fetch("/api/admin/votes", { signal: controller.signal })
+      .then(async (res) => {
+        if (res.ok) { const data = await res.json(); if (!controller.signal.aborted) setComments(data); }
+        else if (res.status === 401) setAuthenticated(false);
+        else setError("加载评论失败");
+      }).catch(() => { if (!controller.signal.aborted) setError("加载评论失败"); });
+    return () => controller.abort();
+  }, [authenticated, commentsMode]);
 
   async function handleCommentDelete(type: "agreement" | "desire", id: string) {
     if (!confirm("删除这条评论？")) return;
@@ -168,10 +200,10 @@ export default function AdminClient() {
   function mergeComments() {
     const all: { id: string; type: "agreement" | "desire"; nickname: string; label: string; comment: string | null; time: string; tripTitle: string }[] = [];
     comments.agreements.forEach((v) =>
-      all.push({ id: v.id, type: "agreement", nickname: v.nickname, label: AGREEMENT_LABELS[v.agreement], comment: v.comment, time: v.created_at, tripTitle: (v as any).trips?.title || "—" })
+      all.push({ id: v.id, type: "agreement", nickname: v.nickname, label: AGREEMENT_LABELS[v.agreement], comment: v.comment, time: v.created_at, tripTitle: v.trips?.title || "—" })
     );
     comments.desires.forEach((v) =>
-      all.push({ id: v.id, type: "desire", nickname: v.nickname, label: DESIRE_LABELS[v.desire_level], comment: v.comment, time: v.created_at, tripTitle: (v as any).trips?.title || "—" })
+      all.push({ id: v.id, type: "desire", nickname: v.nickname, label: DESIRE_LABELS[v.desire_level], comment: v.comment, time: v.created_at, tripTitle: v.trips?.title || "—" })
     );
     all.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
     return all;
@@ -211,13 +243,13 @@ export default function AdminClient() {
       <aside className="w-52 p-6 border-r border-hairline flex-shrink-0">
         <p className="text-sm font-bold text-ink mb-6">📋 管理面板</p>
         <nav className="flex flex-col gap-4 text-sm">
-          <button onClick={() => { setEditing(null); setMessage(""); setManageMode(false); setCommentsMode(false); }} className={`text-left transition-colors ${!commentsMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setEditing(null); setMessage(""); setCommentsMode(false); }} className={`text-left transition-colors ${!commentsMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             旅程列表
           </button>
-          <button onClick={() => { setEditing(null); setManageMode(false); setCommentsMode(true); setMessage(""); }} className={`text-left transition-colors ${commentsMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setEditing(null); setCommentsMode(true); setMessage(""); }} className={`text-left transition-colors ${commentsMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             评论管理
           </button>
-          <button onClick={() => { setEditing(emptyTrip); setManageMode(false); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
+          <button onClick={() => { setEditing(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
             + 新建旅程
           </button>
         </nav>
@@ -273,7 +305,7 @@ export default function AdminClient() {
                 <h2 className="text-xl font-bold text-ink">我的旅程</h2>
                 <p className="text-sm text-muted">共 {trips.length} 段旅程</p>
               </div>
-              <button onClick={() => { setEditing(emptyTrip); setManageMode(false); setCommentsMode(false); }} className="px-6 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:bg-primary-active transition-colors">
+              <button onClick={() => { setEditing(emptyTrip); setCommentsMode(false); }} className="px-6 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:bg-primary-active transition-colors">
                 + 新建旅程
               </button>
             </div>
@@ -281,14 +313,14 @@ export default function AdminClient() {
               {trips.map((trip) => (
                 <div key={trip.id} className="flex items-center gap-4 p-4 bg-surface-card rounded-xl border border-hairline-soft">
                   <div className="w-12 h-12 rounded-lg bg-surface-cream-strong flex-shrink-0 overflow-hidden">
-                    {trip.cover_image && <img src={trip.cover_image} alt="" className="w-full h-full object-cover" />}
+                    {trip.cover_image && <TravelImage src={trip.cover_image} alt="" width={96} height={64} className="w-full h-full object-cover" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-ink truncate">{trip.title}</p>
                     <p className="text-xs text-muted">{formatDateRange(trip.date, trip.end_date)} · {RATING_LABELS[trip.rating]}</p>
                   </div>
                   <button onClick={() => setEditing(trip)} className="text-xs text-muted hover:text-ink transition-colors">编辑</button>
-                  <button onClick={() => { setEditing(trip); setManageMode(true); }} className="text-xs text-primary/70 hover:text-primary transition-colors">照片</button>
+                  <button onClick={() => { setEditing(trip); }} className="text-xs text-primary/70 hover:text-primary transition-colors">照片</button>
                   <button onClick={() => handleDelete(trip.id)} className="text-xs text-red-400/60 hover:text-red-500 transition-colors">删除</button>
                 </div>
               ))}
@@ -382,7 +414,7 @@ export default function AdminClient() {
                 <input value={editing.cover_image || ""} onChange={(e) => setEditing({ ...editing, cover_image: e.target.value })}
                   placeholder="https://... 或从下方照片中点击「设为封面」" className={inputClass} />
                 {editing.cover_image && (
-                  <img src={editing.cover_image} className="mt-2 w-32 h-20 object-cover rounded-lg border border-hairline" />
+                  <TravelImage src={editing.cover_image} alt="封面预览" width={128} height={80} className="mt-2 w-32 h-20 object-cover rounded-lg border border-hairline" />
                 )}
               </div>
 
@@ -408,7 +440,7 @@ export default function AdminClient() {
               </div>
 
               <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => { setEditing(null); setManageMode(false); }}
+                <button type="button" onClick={() => { setEditing(null); }}
                   className="px-7 py-2.5 bg-surface-card border border-hairline rounded-lg text-sm text-muted hover:text-ink transition-colors">取消</button>
                 <button type="submit"
                   className="px-7 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:bg-primary-active transition-colors">保存旅程</button>
@@ -425,7 +457,7 @@ export default function AdminClient() {
                   <div className="grid grid-cols-4 gap-3 mb-6">
                     {photos.map((photo) => (
                       <div key={photo.id} className="relative group aspect-square rounded-lg overflow-hidden bg-surface-cream-strong">
-                        <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                        <TravelImage src={photo.url} alt={photo.caption || "旅程照片"} width={320} height={240} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                           <button type="button"
                             onClick={() => setEditing({ ...editing, cover_image: photo.url })}
@@ -462,7 +494,7 @@ export default function AdminClient() {
                 >
                   <div className="text-3xl mb-2">📷</div>
                   <p className="text-sm text-muted">
-                    {uploading ? "压缩并上传中..." : "拖拽图片到此处或点击上传"}
+                    {uploading ? "上传中..." : "拖拽图片到此处或点击上传"}
                   </p>
                   <p className="text-xs text-muted-soft mt-1">支持 JPG, PNG, WebP · 原始画质上传 · 可批量选择</p>
                   <input

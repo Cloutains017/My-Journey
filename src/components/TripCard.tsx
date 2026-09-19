@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Trip } from "@/lib/types";
 import { formatDateRange } from "@/lib/types";
-import { supabase } from "@/lib/supabase";
+import TravelImage from "@/components/TravelImage";
 import RatingBadge from "@/components/RatingBadge";
 
 const PinIcon = () => (
@@ -11,12 +11,7 @@ const PinIcon = () => (
   </svg>
 );
 
-export default async function TripCard({ trip, index = 0 }: { trip: Trip; index?: number }) {
-  const { count } = await supabase
-    .from("photos")
-    .select("*", { count: "exact", head: true })
-    .eq("trip_id", trip.id);
-  const photoCount = count || 0;
+export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount: number }) {
 
   return (
     <Link href={`/trip/${trip.slug}`} className="group block relative">
@@ -28,7 +23,7 @@ export default async function TripCard({ trip, index = 0 }: { trip: Trip; index?
       <article className="flex flex-col sm:flex-row gap-0 sm:gap-5 md:gap-7 p-4 sm:p-5 md:pl-14 rounded-xl bg-surface-card border border-hairline-soft group-hover:border-primary/20 transition-colors duration-500">
         <div className="relative w-full h-40 sm:w-[130px] sm:h-[100px] md:w-[170px] md:h-[130px] rounded-lg overflow-hidden flex-shrink-0 bg-surface-cream-strong">
           {trip.cover_image ? (
-            <img src={trip.cover_image} alt={trip.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+            <TravelImage src={trip.cover_image} alt={trip.title} fill sizes="(max-width: 639px) calc(100vw - 80px), (max-width: 767px) 130px, 170px" className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-surface-cream-strong text-2xl">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2L2 22h20L12 2z" opacity="0.3" /></svg>
