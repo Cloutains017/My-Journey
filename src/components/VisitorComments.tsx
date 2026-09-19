@@ -1,5 +1,6 @@
 import type { AgreementVote, DesireVote } from "@/lib/types";
 import { AGREEMENT_LABELS, DESIRE_LABELS } from "@/lib/types";
+import { VOTE_COLORS } from "@/components/voteStyles";
 
 function relativeTime(dateStr: string): string {
   const now = Date.now();
@@ -36,12 +37,12 @@ export default function VisitorComments({
     );
   }
 
-  const all: { nickname: string; label: string; comment: string | null; time: string; type: "agreement" | "desire" }[] = [];
+  const all: { nickname: string; label: string; level: number; comment: string | null; time: string }[] = [];
   agreementVotes.forEach((v) =>
-    all.push({ nickname: v.nickname, label: AGREEMENT_LABELS[v.agreement], comment: v.comment, time: v.created_at, type: "agreement" })
+    all.push({ nickname: v.nickname, label: AGREEMENT_LABELS[v.agreement], level: v.agreement, comment: v.comment, time: v.created_at })
   );
   desireVotes.forEach((v) =>
-    all.push({ nickname: v.nickname, label: DESIRE_LABELS[v.desire_level], comment: v.comment, time: v.created_at, type: "desire" })
+    all.push({ nickname: v.nickname, label: DESIRE_LABELS[v.desire_level], level: v.desire_level, comment: v.comment, time: v.created_at })
   );
   all.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
@@ -61,12 +62,8 @@ export default function VisitorComments({
                   <span className="text-[10px] text-muted-soft font-sans">{relativeTime(item.time)}</span>
                 </div>
               </div>
-              <span className={`text-xs px-2.5 py-1 rounded-full border font-medium flex-shrink-0 font-sans ${
-                item.type === "agreement"
-                  ? "bg-accent-teal/10 border-accent-teal/30 text-accent-teal"
-                  : "bg-primary/10 border-primary/30 text-primary"
-              }`}>
-                {item.type === "agreement" ? "✓ " : "🔥 "}{item.label}
+              <span className={`text-xs px-2.5 py-1 rounded-full border font-medium flex-shrink-0 font-sans ${VOTE_COLORS[item.level]}`}>
+                {item.label}
               </span>
             </div>
             {item.comment && <p className="text-sm text-body leading-relaxed pl-11 font-sans">{item.comment}</p>}
