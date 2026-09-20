@@ -97,6 +97,15 @@ export function groupTripsByCity<T extends { city_name: string | null; location:
   return groups;
 }
 
+/** Use the most complete recorded administrative name for map popup headings. */
+export function getCityDisplayName<T extends { city_name: string | null }>(cityName: string, records: T[]): string {
+  const candidates = records
+    .map((record) => record.city_name?.trim())
+    .filter((name): name is string => typeof name === "string" && name.length > 0 && stripCitySuffix(name) === cityName);
+
+  return [...candidates].sort((a, b) => b.length - a.length)[0] ?? cityName;
+}
+
 export const PIN_LOCATIONS: PinLocation[] = [
   { name: "厦门", label: "厦门·家", lat: 24.4798, lng: 118.0894 },
   { name: "福州", label: "福州·福州大学", lat: 26.0745, lng: 119.2965 },

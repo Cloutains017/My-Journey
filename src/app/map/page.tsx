@@ -7,7 +7,7 @@ import type L from "leaflet";
 import { supabase } from "@/lib/supabase";
 import type { Trip } from "@/lib/types";
 import { formatDateRange, RATING_LABELS } from "@/lib/types";
-import { matchCityBoundary, groupTripsByCity, PIN_LOCATIONS } from "@/lib/city-data";
+import { getCityDisplayName, matchCityBoundary, groupTripsByCity, PIN_LOCATIONS } from "@/lib/city-data";
 import type { FeatureCollection } from "@/lib/city-data";
 import { wgs84ToGcj02 } from "@/lib/coords";
 
@@ -124,6 +124,7 @@ export default function MapPage() {
       const cityMap = groupTripsByCity(trips);
 
       cityMap.forEach((cityTrips, cityName) => {
+        const displayName = getCityDisplayName(cityName, cityTrips);
         const avgRating = Math.round(cityTrips.reduce((s, t) => s + t.rating, 0) / cityTrips.length);
         const c = color(avgRating);
 
@@ -161,7 +162,7 @@ export default function MapPage() {
           ).join("");
           main.bindPopup(`
             <div style="color:#fff;background:#252320;padding:10px 14px;border-radius:10px;font-family:system-ui;min-width:200px;max-width:280px;">
-              <div style="font-weight:700;font-size:14px;margin-bottom:8px;">${cityName}</div>
+              <div style="font-weight:700;font-size:14px;margin-bottom:8px;">${displayName}</div>
               ${html}
             </div>
           `);
