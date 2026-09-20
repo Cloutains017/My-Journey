@@ -36,7 +36,7 @@
 ## 本地开发
 
 ```bash
-git clone https://github.com/Cloutains1221/My-Journey.git
+git clone https://github.com/Cloutains017/My-Journey.git
 cd My-Journey
 npm install
 npm run dev
