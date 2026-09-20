@@ -7,7 +7,7 @@ import type L from "leaflet";
 import { supabase } from "@/lib/supabase";
 import type { Trip } from "@/lib/types";
 import { formatDateRange, RATING_LABELS } from "@/lib/types";
-import { matchCityBoundary, PIN_LOCATIONS } from "@/lib/city-data";
+import { matchCityBoundary, groupTripsByCity, PIN_LOCATIONS } from "@/lib/city-data";
 import type { FeatureCollection } from "@/lib/city-data";
 import { wgs84ToGcj02 } from "@/lib/coords";
 
@@ -121,13 +121,7 @@ export default function MapPage() {
 
       const geoJSON = await loadBoundaries();
 
-      const cityMap = new Map<string, Trip[]>();
-      trips.forEach((t) => {
-        const c = t.city_name || t.location;
-        const arr = cityMap.get(c);
-        if (arr) arr.push(t);
-        else cityMap.set(c, [t]);
-      });
+      const cityMap = groupTripsByCity(trips);
 
       cityMap.forEach((cityTrips, cityName) => {
         const avgRating = Math.round(cityTrips.reduce((s, t) => s + t.rating, 0) / cityTrips.length);

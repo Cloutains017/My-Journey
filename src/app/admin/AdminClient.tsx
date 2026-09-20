@@ -388,7 +388,7 @@ export default function AdminClient() {
                 <div>
                   <label className="text-xs text-muted mb-1.5 block">地级行政区名称（用于点亮地图区域）</label>
                   <input value={editing.city_name || ""} onChange={(e) => setEditing({ ...editing, city_name: e.target.value })}
-                    placeholder="例如：福州、杭州、成都..." className={inputClass} />
+                    placeholder="例如：福州市、杭州市、成都市......" className={inputClass} />
                   <p className="text-[10px] text-muted-soft mt-1">输入该旅程所属的地级行政区名称，系统将自动点亮该城市在地图上的整片区域</p>
                 </div>
               )}

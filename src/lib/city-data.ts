@@ -22,6 +22,7 @@ export interface FeatureCollection {
  */
 export function stripCitySuffix(name: string): string {
   return name
+    .trim()
     .replace(/土家族苗族自治州$/, "")
     .replace(/蒙古族藏族自治州$/, "")
     .replace(/藏族羌族自治州$/, "")
@@ -63,9 +64,9 @@ export function matchCityBoundary(
 
   // Try with suffixes stripped
   const stripped = stripCitySuffix(cityNameOrLocation);
-  if (stripped !== cityNameOrLocation) {
+  if (stripped) {
     feature = geoJSON.features.find(
-      (f) => f.properties?.name === stripped,
+      (f) => typeof f.properties?.name === "string" && stripCitySuffix(f.properties.name) === stripped,
     );
     if (feature) return feature;
   }
@@ -84,9 +85,20 @@ export interface PinLocation {
   lng: number; // WGS-84
 }
 
+/** Canonical city identity shared by map popups and city counts. */
+export function groupTripsByCity<T extends { city_name: string | null; location: string }>(trips: T[]): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
+  for (const trip of trips) {
+    const key = stripCitySuffix(trip.city_name?.trim() || trip.location);
+    const group = groups.get(key);
+    if (group) group.push(trip);
+    else groups.set(key, [trip]);
+  }
+  return groups;
+}
+
 export const PIN_LOCATIONS: PinLocation[] = [
   { name: "厦门", label: "厦门·家", lat: 24.4798, lng: 118.0894 },
   { name: "福州", label: "福州·福州大学", lat: 26.0745, lng: 119.2965 },
   { name: "新加坡", label: "新加坡·南洋理工大学", lat: 1.3521, lng: 103.8198 },
 ];
-

@@ -3,6 +3,7 @@ import HeroMap from "@/components/HeroMap";
 import TripCard from "@/components/TripCard";
 import MilestoneMarker from "@/components/MilestoneMarker";
 import YearNav from "@/components/YearNav";
+import { groupTripsByCity } from "@/lib/city-data";
 import type { Trip, Milestone } from "@/lib/types";
 
 export const revalidate = 3600;
@@ -48,7 +49,7 @@ export default async function HomePage() {
   }
   const sortedYears = Array.from(yearGroups.keys()).sort((a, b) => b - a);
 
-  const cityCount = new Set(tripList.map((t) => t.city_name || t.location).filter(Boolean)).size;
+  const cityCount = [...groupTripsByCity(tripList).keys()].filter(Boolean).length;
   const latestDate = tripList[0]?.date || "—";
 
   return (
