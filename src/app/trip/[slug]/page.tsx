@@ -86,7 +86,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
 
         {/* Title overlay on cover */}
         <div className="absolute bottom-8 left-0 right-0 max-w-3xl mx-auto px-8 z-10">
-          <p className="text-sm text-on-dark/70 mb-2 drop-shadow-sm font-sans">
+          <p className="w-fit max-w-full rounded-lg bg-black/75 px-3 py-2 text-base md:text-lg font-medium leading-relaxed text-white mb-3 font-sans">
             {formatDateRange(t.date, t.end_date)} · {t.location}
           </p>
           <h1 className="font-display text-4xl md:text-5xl font-normal tracking-[-0.5px] text-on-dark drop-shadow-[0_2px_20px_rgba(0,0,0,0.6)]">

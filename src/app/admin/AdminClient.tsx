@@ -5,6 +5,7 @@ import TravelImage from "@/components/TravelImage";
 import AdminSecurityPanel from "@/components/AdminSecurityPanel";
 import { RATING_LABELS, AGREEMENT_LABELS, DESIRE_LABELS, formatDateRange } from "@/lib/types";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
+import { deletePhotos } from "@/lib/photo-batch-delete";
 
 export default function AdminClient() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -20,7 +21,16 @@ export default function AdminClient() {
   const [comments, setComments] = useState<{ agreements: (AgreementVote & { trips?: { title: string } | null })[], desires: (DesireVote & { trips?: { title: string } | null })[] }>({ agreements: [], desires: [] });
   const photos = photoRows.filter((photo) => photo.trip_id === editing?.id);
   const editingId = editing?.id;
+  const [selection, setSelection] = useState<{ tripId: string | undefined; ids: string[] }>({ tripId: editingId, ids: [] });
+  const [deletingPhotos, setDeletingPhotos] = useState(false);
+  const deletingPhotosRef = useRef(false);
+  const selectedIds = selection.tripId === editingId ? selection.ids.filter(id => photos.some(photo => photo.id === id)) : [];
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function openEditor(next: Partial<Trip> | null) {
+    setSelection({ tripId: next?.id, ids: [] });
+    setEditing(next);
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -75,6 +85,7 @@ export default function AdminClient() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    if (deletingPhotosRef.current) return;
     if (!editing) return;
     const tripData = { ...editing };
     const isNew = !tripData.id;
@@ -90,9 +101,9 @@ export default function AdminClient() {
       setMessage(isNew ? "旅程已创建，现在可以上传照片" : "保存成功");
       fetchTrips();
       if (isNew && saved?.id) {
-        setEditing({ ...editing, id: saved.id });
+        openEditor({ ...editing, id: saved.id });
       } else {
-        setEditing(null);
+        openEditor(null);
       }
     } else {
       const data = await res.json();
@@ -108,6 +119,7 @@ export default function AdminClient() {
   }
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (deletingPhotosRef.current) return;
     const files = e.target.files;
     if (!files || files.length === 0 || !editing?.id) return;
     setUploading(true);
@@ -163,17 +175,26 @@ export default function AdminClient() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  async function handlePhotoDelete(photoId: string) {
-    if (!confirm("将这张照片移入回收站？原图会保留。")) return;
-    const res = await fetch(`/api/admin/photos/${photoId}`, { method: "DELETE" });
-    if (res.ok) {
-      setMessage("照片已移入回收站");
-      const removed = photoRows.find(p => p.id === photoId);
-      setEditing(prev => prev && removed?.url === prev.cover_image ? { ...prev, cover_image: null } : prev);
-      setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-    } else {
-      const data = await res.json();
-      setError(data.error || "删除失败");
+  async function handlePhotoDelete(ids: string[]) {
+    if (deletingPhotosRef.current || uploading || !editingId) return;
+    const targets = photos.filter(photo => ids.includes(photo.id));
+    if (!targets.length || !confirm(`将所选 ${targets.length} 张照片移入回收站？原图会保留，之后可以恢复。`)) return;
+    deletingPhotosRef.current = true;
+    setDeletingPhotos(true);
+    setError("");
+    setMessage("");
+    try {
+      const { deletedIds, failedIds } = await deletePhotos(targets.map(photo => photo.id));
+      const removedUrls = new Set(targets.filter(photo => deletedIds.includes(photo.id)).map(photo => photo.url));
+      setPhotos(prev => prev.filter(photo => !deletedIds.includes(photo.id)));
+      setEditing(prev => prev?.id === editingId && prev.cover_image && removedUrls.has(prev.cover_image) ? { ...prev, cover_image: null } : prev);
+      setTrips(prev => prev.map(trip => trip.id === editingId && trip.cover_image && removedUrls.has(trip.cover_image) ? { ...trip, cover_image: null } : trip));
+      setSelection(prev => prev.tripId === editingId ? { ...prev, ids: failedIds } : prev);
+      if (deletedIds.length) setMessage(`${deletedIds.length} 张照片已移入回收站`);
+      if (failedIds.length) setError(`${failedIds.length} 张照片未能确认删除，已保留勾选。请刷新列表并检查回收站后重试。`);
+    } finally {
+      deletingPhotosRef.current = false;
+      setDeletingPhotos(false);
     }
   }
 
@@ -248,21 +269,21 @@ export default function AdminClient() {
       <aside className="w-52 p-6 border-r border-hairline flex-shrink-0">
         <p className="text-sm font-bold text-ink mb-6">📋 管理面板</p>
         <nav className="flex flex-col gap-4 text-sm">
-          <button onClick={() => { setSecurityMode(false); setEditing(null); setMessage(""); setCommentsMode(false); fetchTrips(); }} className={`text-left transition-colors ${!commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setSecurityMode(false); openEditor(null); setMessage(""); setCommentsMode(false); fetchTrips(); }} className={`text-left transition-colors ${!commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             旅程列表
           </button>
-          <button onClick={() => { setSecurityMode(false); setEditing(null); setCommentsMode(true); setMessage(""); fetchComments(); }} className={`text-left transition-colors ${commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setSecurityMode(false); openEditor(null); setCommentsMode(true); setMessage(""); fetchComments(); }} className={`text-left transition-colors ${commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             评论管理
           </button>
-          <button onClick={() => { setSecurityMode(false); setEditing(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
+          <button onClick={() => { setSecurityMode(false); openEditor(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
             + 新建旅程
           </button>
-          <button onClick={() => { setSecurityMode(true); setEditing(null); setMessage(""); setError(""); }} className={`text-left ${securityMode ? "text-ink font-semibold" : "text-muted"}`}>回收站与操作记录</button>
+          <button onClick={() => { setSecurityMode(true); openEditor(null); setMessage(""); setError(""); }} className={`text-left ${securityMode ? "text-ink font-semibold" : "text-muted"}`}>回收站与操作记录</button>
           <button onClick={async () => {
             try {
               const res = await fetch("/api/admin/auth", { method: "DELETE" });
               if (!res.ok) throw new Error();
-              setAuthenticated(false); setEditing(null); setPhotos([]); setTrips([]); setError(""); setMessage(""); setSecurityMode(false);
+              setAuthenticated(false); openEditor(null); setPhotos([]); setTrips([]); setError(""); setMessage(""); setSecurityMode(false);
             } catch { setError("退出失败，请重试"); }
           }} className="text-left text-muted">退出登录</button>
         </nav>
@@ -318,7 +339,7 @@ export default function AdminClient() {
                 <h2 className="text-xl font-bold text-ink">我的旅程</h2>
                 <p className="text-sm text-muted">共 {trips.length} 段旅程</p>
               </div>
-              <button onClick={() => { setEditing(emptyTrip); setCommentsMode(false); }} className="px-6 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:bg-primary-active transition-colors">
+              <button onClick={() => { openEditor(emptyTrip); setCommentsMode(false); }} className="px-6 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:bg-primary-active transition-colors">
                 + 新建旅程
               </button>
             </div>
@@ -332,8 +353,8 @@ export default function AdminClient() {
                     <p className="text-sm font-semibold text-ink truncate">{trip.title}</p>
                     <p className="text-xs text-muted">{formatDateRange(trip.date, trip.end_date)} · {RATING_LABELS[trip.rating]}</p>
                   </div>
-                  <button onClick={() => setEditing(trip)} className="text-xs text-muted hover:text-ink transition-colors">编辑</button>
-                  <button onClick={() => { setEditing(trip); }} className="text-xs text-primary/70 hover:text-primary transition-colors">照片</button>
+                  <button onClick={() => openEditor(trip)} className="text-xs text-muted hover:text-ink transition-colors">编辑</button>
+                  <button onClick={() => { openEditor(trip); }} className="text-xs text-primary/70 hover:text-primary transition-colors">照片</button>
                   <button onClick={() => handleDelete(trip.id)} className="text-xs text-red-400/60 hover:text-red-500 transition-colors">删除</button>
                 </div>
               ))}
@@ -453,9 +474,9 @@ export default function AdminClient() {
               </div>
 
               <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => { setEditing(null); }}
+                <button type="button" onClick={() => { openEditor(null); }}
                   className="px-7 py-2.5 bg-surface-card border border-hairline rounded-lg text-sm text-muted hover:text-ink transition-colors">取消</button>
-                <button type="submit"
+                <button type="submit" disabled={deletingPhotos}
                   className="px-7 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:bg-primary-active transition-colors">保存旅程</button>
               </div>
             </form>
@@ -464,22 +485,43 @@ export default function AdminClient() {
             {editing.id && (
               <div className="mt-10 pt-8 border-t border-hairline">
                 <h3 className="text-lg font-bold text-ink mb-4">📷 旅程照片 · {photos.length} 张</h3>
+                {photos.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <button type="button" disabled={deletingPhotos || uploading}
+                      onClick={() => setSelection({ tripId: editingId, ids: selectedIds.length === photos.length ? [] : photos.map(photo => photo.id) })}
+                      className="px-3 py-2 rounded-lg border border-hairline text-sm text-ink disabled:opacity-50">
+                      {selectedIds.length === photos.length ? "取消全选" : "全选"}
+                    </button>
+                    <span className="text-sm text-body" role="status">已选 {selectedIds.length} / {photos.length} 张</span>
+                    <button type="button" disabled={!selectedIds.length || deletingPhotos || uploading}
+                      onClick={() => handlePhotoDelete(selectedIds)}
+                      className="px-3 py-2 rounded-lg bg-red-700 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                      {deletingPhotos ? "正在移入回收站…" : `删除所选（${selectedIds.length}）`}
+                    </button>
+                  </div>
+                )}
 
                 {/* Existing photos grid */}
                 {photos.length > 0 && (
-                  <div className="grid grid-cols-4 gap-3 mb-6">
-                    {photos.map((photo) => (
-                      <div key={photo.id} className="relative group aspect-square rounded-lg overflow-hidden bg-surface-cream-strong">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6" aria-busy={deletingPhotos}>
+                    {photos.map((photo, index) => (
+                      <div key={photo.id} className={`relative group aspect-square rounded-lg overflow-hidden bg-surface-cream-strong ${selectedIds.includes(photo.id) ? "ring-2 ring-primary ring-offset-2" : ""}`}>
                         <TravelImage src={photo.url} alt={photo.caption || "旅程照片"} width={320} height={240} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                          <button type="button"
+                        <label className="absolute top-1 left-1 z-10 flex items-center justify-center w-11 h-11 rounded-lg bg-black/70 cursor-pointer">
+                          <input type="checkbox" checked={selectedIds.includes(photo.id)} disabled={deletingPhotos || uploading}
+                            aria-label={`选择第 ${index + 1} 张照片${photo.caption ? `：${photo.caption}` : ""}`}
+                            onChange={event => setSelection({ tripId: editingId, ids: event.target.checked ? [...selectedIds, photo.id] : selectedIds.filter(id => id !== photo.id) })}
+                            className="w-5 h-5 accent-primary" />
+                        </label>
+                        <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 flex flex-wrap items-center justify-center gap-2">
+                          <button type="button" disabled={deletingPhotos}
                             onClick={() => setEditing({ ...editing, cover_image: photo.url })}
                             className="px-2 py-1 rounded bg-canvas text-ink text-xs font-semibold hover:bg-white"
                           >
                             设为封面
                           </button>
-                          <button
-                            onClick={() => handlePhotoDelete(photo.id)}
+                          <button type="button" disabled={deletingPhotos || uploading} aria-label={`删除第 ${index + 1} 张照片`}
+                            onClick={() => handlePhotoDelete([photo.id])}
                             className="w-6 h-6 rounded-full bg-red-500/80 text-white text-xs flex items-center justify-center hover:bg-red-500"
                           >
                             ✕
@@ -515,6 +557,7 @@ export default function AdminClient() {
                     type="file"
                     accept="image/*"
                     multiple
+                    disabled={uploading || deletingPhotos}
                     className="hidden"
                     onChange={handlePhotoUpload}
                   />
