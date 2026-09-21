@@ -99,7 +99,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!(await checkAuth())) return NextResponse.json({ error: "未授权" }, { status: 401 });
+  if (!(await checkAuth(request))) return NextResponse.json({ error: "未授权" }, { status: 401 });
   const body = await request.json();
   const { title, slug: customSlug, date, end_date, location, city_name, latitude, longitude, cover_image, content, rating } = body;
   const baseSlug = customSlug || generateSlug(title || "", date);

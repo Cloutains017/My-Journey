@@ -71,6 +71,8 @@ create table city_boundaries (
 );
 
 -- 公开可读
+alter table city_boundaries enable row level security;
+
 create policy "Anyone can read trips" on trips for select using (true);
 create policy "Anyone can read photos" on photos for select using (true);
 create policy "Anyone can read agreement_votes" on agreement_votes for select using (true);

@@ -21,7 +21,7 @@ test("every admin data route rejects the legacy forged cookie before processing 
   for (const [method, path] of routes) {
     const res = await fetch(`${base}/api/admin${path}`, {
       method,
-      headers: { Cookie: "admin_token=authenticated", "Content-Type": "application/json" },
+      headers: { Cookie: "admin_token=authenticated", "Content-Type": "application/json", Origin: base! },
       ...(method === "POST" || method === "PUT" ? { body: "{}" } : {}),
     });
     assert.equal(res.status, 401, `${method} ${path} must reject forged cookies`);
@@ -30,12 +30,12 @@ test("every admin data route rejects the legacy forged cookie before processing 
 
 test("login rejects malformed and missing passwords and permits a genuine session", options, async () => {
   for (const [body, status] of [["{", 400], ["{}", 401], ["null", 401], ['{"password":123}', 401]] as const) {
-    const res = await fetch(`${base}/api/admin/auth`, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+    const res = await fetch(`${base}/api/admin/auth`, { method: "POST", headers: { "Content-Type": "application/json", Origin: base! }, body });
     assert.equal(res.status, status);
     assert.equal(res.headers.has("set-cookie"), false);
   }
   const login = await fetch(`${base}/api/admin/auth`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST", headers: { "Content-Type": "application/json", Origin: base! },
     body: JSON.stringify({ password: process.env.ADMIN_PASSWORD }),
   });
   assert.equal(login.status, 200);

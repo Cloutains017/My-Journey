@@ -1,4 +1,4 @@
-import { S3Client, DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, HeadObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -40,17 +40,14 @@ export async function r2Upload(
   return `${PUBLIC_URL}/${key}`;
 }
 
-export async function r2Delete(key: string): Promise<void> {
-  const client = getR2Client();
-  await client.send(
-    new DeleteObjectCommand({ Bucket: BUCKET, Key: key }),
-  );
+export async function r2PhotoInfo(key: string) {
+  return getR2Client().send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
 }
 
 export async function r2PresignUpload(
   key: string,
   contentType: string,
-  expiresIn = 900,
+  expiresIn = 300,
 ): Promise<string> {
   const client = getR2Client();
   return getSignedUrl(
@@ -58,12 +55,4 @@ export async function r2PresignUpload(
     new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType }),
     { expiresIn },
   );
-}
-
-export function r2GetKeyFromUrl(url: string): string {
-  const prefix = `${PUBLIC_URL}/`;
-  if (!url.startsWith(prefix)) {
-    throw new Error(`URL ${url} does not match R2 public URL prefix`);
-  }
-  return url.slice(prefix.length);
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import TravelImage from "@/components/TravelImage";
+import AdminSecurityPanel from "@/components/AdminSecurityPanel";
 import { RATING_LABELS, AGREEMENT_LABELS, DESIRE_LABELS, formatDateRange } from "@/lib/types";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
 
@@ -15,6 +16,7 @@ export default function AdminClient() {
   const [photoRows, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState(false);
   const [commentsMode, setCommentsMode] = useState(false);
+  const [securityMode, setSecurityMode] = useState(false);
   const [comments, setComments] = useState<{ agreements: (AgreementVote & { trips?: { title: string } | null })[], desires: (DesireVote & { trips?: { title: string } | null })[] }>({ agreements: [], desires: [] });
   const photos = photoRows.filter((photo) => photo.trip_id === editing?.id);
   const editingId = editing?.id;
@@ -99,9 +101,9 @@ export default function AdminClient() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("确认删除？此操作不可撤销。")) return;
+    if (!confirm("将旅程及其照片、评论移入回收站？之后可以恢复。")) return;
     const res = await fetch(`/api/admin/trips/${id}`, { method: "DELETE" });
-    if (res.ok) { setMessage("已删除"); fetchTrips(); }
+    if (res.ok) { setMessage("已移入回收站"); fetchTrips(); }
     else setError("删除失败");
   }
 
@@ -114,6 +116,7 @@ export default function AdminClient() {
     const publicUrls: string[] = [];
     try {
       for (const file of Array.from(files)) {
+        if (file.size > 50 * 1024 * 1024) throw new Error("单张照片不能超过 50 MB");
         const fileName = `${Date.now()}-${file.name}`;
 
         // 1. 获取签名 URL
@@ -161,10 +164,12 @@ export default function AdminClient() {
   }
 
   async function handlePhotoDelete(photoId: string) {
-    if (!confirm("删除这张照片？")) return;
+    if (!confirm("将这张照片移入回收站？原图会保留。")) return;
     const res = await fetch(`/api/admin/photos/${photoId}`, { method: "DELETE" });
     if (res.ok) {
-      setMessage("照片已删除");
+      setMessage("照片已移入回收站");
+      const removed = photoRows.find(p => p.id === photoId);
+      setEditing(prev => prev && removed?.url === prev.cover_image ? { ...prev, cover_image: null } : prev);
       setPhotos((prev) => prev.filter((p) => p.id !== photoId));
     } else {
       const data = await res.json();
@@ -191,9 +196,9 @@ export default function AdminClient() {
   }, [authenticated, commentsMode]);
 
   async function handleCommentDelete(type: "agreement" | "desire", id: string) {
-    if (!confirm("删除这条评论？")) return;
+    if (!confirm("将这条评论移入回收站？")) return;
     const res = await fetch(`/api/admin/votes/${type}/${id}`, { method: "DELETE" });
-    if (res.ok) { setMessage("评论已删除"); fetchComments(); }
+    if (res.ok) { setMessage("评论已移入回收站"); fetchComments(); }
     else { const data = await res.json(); setError(data.error || "删除失败"); }
   }
 
@@ -243,15 +248,23 @@ export default function AdminClient() {
       <aside className="w-52 p-6 border-r border-hairline flex-shrink-0">
         <p className="text-sm font-bold text-ink mb-6">📋 管理面板</p>
         <nav className="flex flex-col gap-4 text-sm">
-          <button onClick={() => { setEditing(null); setMessage(""); setCommentsMode(false); }} className={`text-left transition-colors ${!commentsMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setSecurityMode(false); setEditing(null); setMessage(""); setCommentsMode(false); fetchTrips(); }} className={`text-left transition-colors ${!commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             旅程列表
           </button>
-          <button onClick={() => { setEditing(null); setCommentsMode(true); setMessage(""); }} className={`text-left transition-colors ${commentsMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setSecurityMode(false); setEditing(null); setCommentsMode(true); setMessage(""); fetchComments(); }} className={`text-left transition-colors ${commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             评论管理
           </button>
-          <button onClick={() => { setEditing(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
+          <button onClick={() => { setSecurityMode(false); setEditing(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
             + 新建旅程
           </button>
+          <button onClick={() => { setSecurityMode(true); setEditing(null); setMessage(""); setError(""); }} className={`text-left ${securityMode ? "text-ink font-semibold" : "text-muted"}`}>回收站与操作记录</button>
+          <button onClick={async () => {
+            try {
+              const res = await fetch("/api/admin/auth", { method: "DELETE" });
+              if (!res.ok) throw new Error();
+              setAuthenticated(false); setEditing(null); setPhotos([]); setTrips([]); setError(""); setMessage(""); setSecurityMode(false);
+            } catch { setError("退出失败，请重试"); }
+          }} className="text-left text-muted">退出登录</button>
         </nav>
       </aside>
 
@@ -259,7 +272,7 @@ export default function AdminClient() {
         {message && <p className="text-sm text-accent-teal font-medium mb-4">{message}</p>}
         {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
-        {commentsMode ? (
+        {securityMode ? <AdminSecurityPanel /> : commentsMode ? (
           <>
             <div className="flex justify-between items-center mb-6">
               <div>

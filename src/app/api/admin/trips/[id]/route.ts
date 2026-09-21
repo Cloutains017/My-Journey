@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
 import { checkAuth } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
+import { archiveDelete } from "@/lib/admin-recycle";
 
 
 function generateSlug(title: string, date?: string): string {
@@ -22,7 +23,7 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await checkAuth())) return NextResponse.json({ error: "未授权" }, { status: 401 });
+  if (!(await checkAuth(request))) return NextResponse.json({ error: "未授权" }, { status: 401 });
   const { id } = await params;
   const body = await request.json();
   const { title, slug: customSlug, date, end_date, location, city_name, latitude, longitude, cover_image, content, rating } = body;
@@ -40,15 +41,5 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await checkAuth())) return NextResponse.json({ error: "未授权" }, { status: 401 });
-  const { id } = await params;
-
-  const { data: trip } = await supabaseAdmin.from("trips").select("slug").eq("id", id).single();
-
-  const { error } = await supabaseAdmin.from("trips").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  revalidatePath("/");
-  if (trip?.slug) revalidatePath(`/trip/${trip.slug}`);
-  return NextResponse.json({ success: true });
+  return archiveDelete(request, "trips", (await params).id);
 }

@@ -18,7 +18,7 @@
 - 旅程详情：杂志式封面、阅读进度、瀑布流照片画廊与灯箱浏览。
 - 访客互动：五档认可度、五档心动指数、昵称和留言。
 - 地图页：全屏浏览城市与相关旅程。
-- 管理后台：密码登录、旅程管理、照片批量上传、封面设置与投票管理。
+- 管理后台：带限速的密码登录、旅程管理、照片批量上传、封面设置、回收站恢复与操作记录。
 
 ## 技术栈
 
@@ -62,7 +62,7 @@ copy .env.example .env.local
 | `CLOUDFLARE_*` | R2 账号、访问密钥、桶名和公开访问地址 |
 | `R2_CORS_ALLOWED_ORIGINS` | 可选：覆盖默认的 R2 浏览器上传允许来源列表 |
 
-修改 `ADMIN_PASSWORD` 或 `ADMIN_SESSION_SECRET` 会使已有后台会话失效。
+修改 `ADMIN_PASSWORD` 或 `ADMIN_SESSION_SECRET` 并重新部署后，旧后台会话失效。请使用密码管理器生成独立的长密码；生产环境建议同时配置独立会话密钥。
 
 ## 常用命令
 
@@ -77,6 +77,21 @@ copy .env.example .env.local
 | `npm run city-boundaries:fetch` | 更新本地城市边界 GeoJSON |
 | `npm run r2:stats` | 查看 R2 对象数量和用量 |
 | `npm run r2:configure-cors` | 写入 R2 的浏览器上传 CORS 规则 |
+| `npm run test:security-api` | 在本地临时数据库与 Next.js 服务上验证安全接口，不触碰正式数据 |
+| `npm run backup:data` | 导出业务数据与 R2 原图至 Git 忽略的 `backups/`，生成校验清单 |
+| `npm run backup:verify -- backups/<快照目录>` | 校验备份文件，并在内存数据库演练业务数据恢复 |
+
+## 数据保护
+
+完整方案和验收记录见 [docs/security-plan.md](docs/security-plan.md)。后台删除会在同一事务内保存快照并移除公开展示记录，R2 原图保留。旅程快照包含关联照片和评论；在“回收站与操作记录”恢复时遇到冲突会整体取消，不覆盖已有数据。后台没有永久清空入口，回收站不会自动过期。
+
+删除不是私密擦除：已知原图地址仍可能访问照片。若需要永久移除敏感照片，应由所有者在保留备份后单独处理存储对象和缓存。
+
+登录限制为每个来源每 15 分钟 10 次尝试、全站每 15 分钟 100 次，包含成功登录。数据库不可用时拒绝登录和回收站操作。登录日志不保存密码、Cookie 或密钥；业务修改前后的快照保存在仅服务端可读的审计表。
+
+备份使用本机 `.env.local` 只读导出，包含私人审计数据，不能提交 Git 或放到公开网盘。可传入上次完整快照目录复用校验相同的图片：`npm run backup:data -- backups/<上次快照目录>`。只有 `manifest.json` 中 `complete: true` 才表示完成；该导出不是数据库一致性快照，不替代定期 `pg_dump` 和异地备份。回收站、备份及完整审计会占用额外空间。
+
+恢复正式数据前先运行 `backup:verify`，然后在隔离项目内核对；按旅程、照片、评论的顺序恢复记录，按 manifest 中的 key 恢复 R2 文件。不要直接覆盖已有正式数据。
 
 ### 配置 R2 CORS
 
@@ -104,13 +119,15 @@ npm run r2:configure-cors
   npm test
   ```
 
-  测试使用 `.env.local` 的后台密码验证登录；其余接口只验证未授权状态，不修改数据。
+  测试使用 `.env.local` 的后台密码验证登录，会消耗登录尝试次数并写入登录审计；其余接口只验证未授权状态，不修改业务数据。完整删除/恢复测试使用 `test:security-api` 的隔离环境。
 
 - R2 图片经 Next.js Image 按显示尺寸加载，灯箱保留原图。外部封面地址按原地址展示。
 
 ## 部署
 
 项目部署在 Vercel。将环境变量同步到 Vercel 的 Production 环境后，从 `main` 分支推送即可触发部署。部署后通过线上站点检查首页、旅程详情、后台登录与图片上传。
+
+首次安装数据保护功能必须先备份，再在 Supabase 执行 `supabase/security.sql`，核对权限后部署应用。新项目先执行 `supabase/schema.sql` 再执行安全脚本。安全表不向匿名或普通登录用户开放；新增管理员 RPC 仅授权 `service_role`。数据库迁移成功前不要发布依赖它的新后台，否则登录和回收站操作会安全地拒绝执行。
 
 `R2_CORS_ALLOWED_ORIGINS` 仅被本地维护脚本读取，不需要配置为 Vercel 运行时环境变量；需要更改桶的 CORS 时，在本地执行相应命令即可。
 
@@ -122,10 +139,13 @@ src/
 ├── components/              # 地图、旅程、投票和后台界面组件
 └── lib/                     # 数据访问、认证、R2 和地理工具
 scripts/
+├── backup-data.mjs         # 数据及原图备份
+├── verify-backup.mjs       # 校验与隔离恢复演练
 ├── check-r2-stats.ts        # R2 用量检查
 ├── fetch-city-boundaries.ts # 城市边界数据更新
 └── setup-r2-cors.ts         # R2 浏览器上传 CORS 配置
 supabase/schema.sql          # 数据库结构
+supabase/security.sql        # 权限、限速、审计、回收站与恢复
 public/data/city-boundaries.json # 城市边界静态数据
 tests/                       # 接口与组件行为测试
 DESIGN.md                    # 视觉设计规范

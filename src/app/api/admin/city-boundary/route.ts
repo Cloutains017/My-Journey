@@ -26,7 +26,7 @@ async function fetchCityBoundary(adcode: string) {
 }
 
 export async function POST(request: Request) {
-  if (!(await checkAuth())) {
+  if (!(await checkAuth(request))) {
     return NextResponse.json({ error: "未授权" }, { status: 401 });
   }
 
