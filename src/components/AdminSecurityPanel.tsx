@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { purgePhotoArchives } from '@/lib/recycle-purge';
+import TravelImage from '@/components/TravelImage';
+import type { RecyclePreview } from '@/lib/recycle-entry';
 
-type Recycled = { id: string; target: string; label: string; created_at: string };
+type Recycled = { id: string; target: string; label: string; created_at: string; preview?: RecyclePreview };
 type Audit = { id: string; action: string; target: string; created_at: string; record_id: string | null };
 const targets: Record<string,string> = { trips:'旅程', photos:'照片', agreement_votes:'认可度评论', desire_votes:'心动指数评论', city_boundaries:'城市边界', admin:'后台' };
 const actions: Record<string,string> = { INSERT:'创建', UPDATE:'修改', DELETE:'移入回收站 / 删除记录', RESTORE:'恢复', PURGE:'永久删除', LOGIN_SUCCESS:'登录成功', LOGIN_FAILURE:'登录失败' };
@@ -74,9 +76,17 @@ export default function AdminSecurityPanel() {
         <button type="button" disabled={!selectedPhotos.length || busy !== null} onClick={()=>void purge(selectedPhotos)} className="text-sm text-red-700 disabled:opacity-50">{busy === 'purge-selected' ? '正在永久删除…' : `永久删除所选（${selectedPhotos.length}）`}</button>
         <button type="button" disabled={busy !== null} onClick={()=>void purge([], true)} className="text-sm text-red-700 disabled:opacity-50">{busy === 'purge-all' ? '正在清空…' : '清空全部照片'}</button>
       </div>}
-      {loaded && rows.map(row=><div key={row.id} className="flex justify-between gap-4 p-4 mb-2 border border-hairline rounded-xl">
-        <div><p className="text-sm text-ink">{targets[row.target] || row.target} · {row.label}</p><p className="text-xs text-muted mt-1">{new Date(row.created_at).toLocaleString('zh-CN')}</p></div>
-        <div className="flex items-center gap-3">
+      {loaded && rows.map(row=><div key={row.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 mb-2 border border-hairline-soft rounded-xl bg-surface-card">
+        <div className="flex min-w-0 items-center gap-3">
+          {row.target === 'photos' && <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg border border-hairline bg-canvas">
+            {row.preview ? <TravelImage src={row.preview.url} alt={row.preview.caption || '回收站照片预览'} fill sizes="96px" className="object-cover" /> : <span className="flex h-full items-center justify-center px-2 text-center text-xs text-muted">预览不可用</span>}
+          </div>}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-ink">{row.preview?.caption || row.label || targets[row.target] || row.target}</p>
+            <p className="text-xs text-muted mt-1">{targets[row.target] || row.target} · {new Date(row.created_at).toLocaleString('zh-CN')}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-3">
           {row.target === 'photos' && <label className="flex items-center gap-1.5 text-sm text-muted"><input type="checkbox" checked={selectedPhotos.includes(row.id)} disabled={busy !== null} onChange={event=>setSelectedPhotoIds(event.target.checked ? [...selectedPhotos, row.id] : selectedPhotos.filter(id => id !== row.id))} />选择</label>}
           <button disabled={busy !== null} onClick={()=>void restore(row.id)} className="text-sm text-primary disabled:opacity-50">{busy===row.id?'恢复中…':'恢复'}</button>
         </div>

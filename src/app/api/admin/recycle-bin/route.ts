@@ -4,6 +4,7 @@ import { checkAuth } from '@/lib/admin-auth';
 import { UUID } from '@/lib/admin-security';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { r2Delete, r2KeyFromPublicUrl } from '@/lib/r2';
+import { toRecycleEntry } from '@/lib/recycle-entry';
 
 type RecycledPhoto = { id: string; payload: { photos?: { url?: string }[] } };
 
@@ -34,9 +35,9 @@ export async function GET(request: Request) {
   const page = Math.max(0, Number(new URL(request.url).searchParams.get('page')) || 0);
   if (!Number.isSafeInteger(page)) return NextResponse.json({ error: '无效页码' }, { status: 400 });
   const { data, error } = await supabaseAdmin.from('admin_recycle_bin')
-    .select('id,target,label,created_at').is('restored_at', null).order('created_at', { ascending: false }).order('id').range(page * 50, page * 50 + 49);
+    .select('id,target,label,created_at,payload').is('restored_at', null).order('created_at', { ascending: false }).order('id').range(page * 50, page * 50 + 49);
   if (error) return NextResponse.json({ error: '回收站暂不可用' }, { status: 503 });
-  return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json((data || []).map(toRecycleEntry), { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function POST(request: Request) {
