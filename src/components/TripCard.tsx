@@ -5,7 +5,7 @@ import TravelImage from "@/components/TravelImage";
 import RatingBadge from "@/components/RatingBadge";
 
 const PinIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block shrink-0 -mt-px" aria-hidden="true">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted" aria-hidden="true">
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
     <circle cx="12" cy="10" r="3" />
   </svg>
@@ -36,8 +36,8 @@ export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount:
               {trip.title}
             </h3>
             {trip.location && (
-              <p className="text-base font-medium text-body mb-1.5 flex items-center gap-1.5 font-sans">
-                <PinIcon /> {trip.location}
+              <p className="text-sm font-normal text-muted mb-2 flex items-baseline gap-1.5 font-sans leading-relaxed">
+                <PinIcon /> <span>{trip.location}</span>
               </p>
             )}
             <p className="text-sm text-body leading-relaxed line-clamp-2 font-sans">

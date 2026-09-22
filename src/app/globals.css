@@ -93,6 +93,14 @@ h2 {
   line-height: 1.15;
 }
 
+/* Keep long trip titles balanced without overwhelming the mobile cover. */
+.trip-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
 /* ── Inline links ── */
 a {
   color: var(--color-primary);
