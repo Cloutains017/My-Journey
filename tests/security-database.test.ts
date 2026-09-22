@@ -74,3 +74,26 @@ test('photo deletion clears broken cover; restore respects a new cover; failed a
     assert.equal((await db.query<{ title: string }>('select title from trips')).rows[0].title, '测试');
   } finally { await db.close(); }
 });
+
+test('permanent photo purge removes its active archive and records the operation', async () => {
+  const db = await database();
+  try {
+    await seed(db);
+    await db.exec('set role service_role');
+    const { rows } = await db.query<{ id: string }>(`select admin_archive_delete('photos','${photo}') as id`);
+    await db.query('select admin_purge_archive($1)', [rows[0].id]);
+    assert.equal((await db.query('select * from admin_recycle_bin where id = $1', [rows[0].id])).rows.length, 0);
+    assert.equal((await db.query("select * from admin_audit_log where action = 'PURGE' and target = 'photos'")).rows.length, 1);
+  } finally { await db.close(); }
+});
+
+test('permanent purge refuses archives that are not active photos', async () => {
+  const db = await database();
+  try {
+    await seed(db);
+    await db.exec('set role service_role');
+    const { rows } = await db.query<{ id: string }>(`select admin_archive_delete('trips','${trip}') as id`);
+    await assert.rejects(db.query('select admin_purge_archive($1)', [rows[0].id]), /not available/);
+    assert.equal((await db.query('select * from admin_recycle_bin where id = $1', [rows[0].id])).rows.length, 1);
+  } finally { await db.close(); }
+});

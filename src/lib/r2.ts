@@ -1,4 +1,4 @@
-import { S3Client, HeadObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, S3Client, HeadObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -42,6 +42,20 @@ export async function r2Upload(
 
 export async function r2PhotoInfo(key: string) {
   return getR2Client().send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
+}
+
+export async function r2Delete(key: string) {
+  await getR2Client().send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+}
+
+export function r2KeyFromPublicUrl(url: string): string {
+  const publicUrl = new URL(PUBLIC_URL);
+  const photoUrl = new URL(url);
+  const prefix = publicUrl.pathname.replace(/\/$/, "");
+  if (photoUrl.origin !== publicUrl.origin || !photoUrl.pathname.startsWith(`${prefix}/`)) {
+    throw new Error("照片不在受管 R2 存储中");
+  }
+  return decodeURIComponent(photoUrl.pathname.slice(prefix.length + 1));
 }
 
 export async function r2PresignUpload(
