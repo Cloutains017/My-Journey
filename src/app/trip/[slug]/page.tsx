@@ -71,7 +71,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
       {/* Cover hero - magazine style */}
       <div className="relative isolate flex min-h-[400px] w-full flex-col justify-end overflow-hidden md:min-h-[50vh]">
         {t.cover_image ? (
-          <TravelImage src={t.cover_image} alt={t.title} fill sizes="100vw" preload className="object-cover scale-105" />
+          <TravelImage src={t.cover_image} alt={t.title} fill sizes="100vw" preload unoptimized className="object-cover scale-105" />
         ) : (
           <div className="absolute inset-0 bg-surface-cream-strong flex items-center justify-center">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-surface-cream-strong">
