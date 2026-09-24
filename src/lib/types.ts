@@ -10,6 +10,7 @@ export interface Trip {
   longitude: number;
   cover_image: string | null;
   content: string | null;
+  photo_groups?: import("./photo-groups").PhotoGroup[] | null;
   rating: number;
   created_at: string;
   photos?: Photo[];

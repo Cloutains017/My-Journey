@@ -14,8 +14,9 @@ const id = "00000000-0000-0000-0000-000000000000";
 test("every admin data route rejects the legacy forged cookie before processing a request", options, async () => {
   const routes = [
     ["GET", "/trips"], ["POST", "/trips"], ["PUT", `/trips/${id}`], ["DELETE", `/trips/${id}`],
+    ["PUT", `/trips/${id}/photo-groups`],
     ["GET", "/votes"], ["DELETE", `/votes/agreement/${id}`], ["DELETE", `/votes/desire/${id}`],
-    ["POST", "/photos"], ["POST", "/photos/presign"], ["POST", "/photos/register"],
+    ["POST", "/photos/presign"], ["POST", "/photos/register"],
     ["DELETE", `/photos/${id}`], ["POST", "/city-boundary"],
   ];
   for (const [method, path] of routes) {

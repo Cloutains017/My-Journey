@@ -1,5 +1,4 @@
 import { DeleteObjectCommand, S3Client, HeadObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 function getR2Client(): S3Client {
@@ -20,25 +19,6 @@ function getR2Client(): S3Client {
 
 const BUCKET = process.env.CLOUDFLARE_R2_BUCKET!;
 const PUBLIC_URL = process.env.CLOUDFLARE_R2_PUBLIC_URL!;
-
-export async function r2Upload(
-  key: string,
-  body: Buffer | Blob | File,
-  contentType: string,
-): Promise<string> {
-  const client = getR2Client();
-  const upload = new Upload({
-    client,
-    params: {
-      Bucket: BUCKET,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-    },
-  });
-  await upload.done();
-  return `${PUBLIC_URL}/${key}`;
-}
 
 export async function r2PhotoInfo(key: string) {
   return getR2Client().send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));

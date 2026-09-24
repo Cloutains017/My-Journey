@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { Photo } from "@/lib/types";
 import TravelImage from "@/components/TravelImage";
 
-export default function PhotoGallery({ photos }: { photos: Photo[] }) {
+export default function PhotoGallery({ photos, title = "旅途影像" }: { photos: Photo[]; title?: string }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const goNext = useCallback(() => {
@@ -36,7 +36,7 @@ export default function PhotoGallery({ photos }: { photos: Photo[] }) {
   return (
     <div className="mb-12">
       <p className="text-xs uppercase tracking-[3px] text-muted-soft mb-5 font-medium font-sans">
-        旅途影像 · {photos.length} Photos
+        {title} · {photos.length} Photos
       </p>
       <div className="columns-2 md:columns-3 gap-3">
         {photos.map((photo, i) => (

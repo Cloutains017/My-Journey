@@ -75,6 +75,22 @@ test('photo deletion clears broken cover; restore respects a new cover; failed a
   } finally { await db.close(); }
 });
 
+test('trip snapshots created before photo grouping remain restorable', async () => {
+  const db = await database();
+  try {
+    await seed(db);
+    await db.exec('set role service_role');
+    const { rows } = await db.query<{ id: string }>(`select admin_archive_delete('trips','${trip}') as id`);
+    await db.query(`update admin_recycle_bin
+      set payload = jsonb_set(payload, '{trips,0}', (payload->'trips'->0) - 'photo_groups')
+      where id = $1`, [rows[0].id]);
+    await db.query('select admin_restore($1)', [rows[0].id]);
+    const restored = await db.query<{ photo_groups: unknown }>('select photo_groups from trips');
+    assert.equal(restored.rows.length, 1);
+    assert.equal(restored.rows[0].photo_groups, null);
+  } finally { await db.close(); }
+});
+
 test('permanent photo purge removes its active archive and records the operation', async () => {
   const db = await database();
   try {

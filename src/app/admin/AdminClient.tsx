@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import TravelImage from "@/components/TravelImage";
 import AdminSecurityPanel from "@/components/AdminSecurityPanel";
+import PhotoGroupEditor from "@/components/PhotoGroupEditor";
 import { RATING_LABELS, AGREEMENT_LABELS, DESIRE_LABELS, formatDateRange } from "@/lib/types";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
 import { deletePhotos } from "@/lib/photo-batch-delete";
@@ -562,6 +563,16 @@ export default function AdminClient() {
                     onChange={handlePhotoUpload}
                   />
                 </div>
+                <PhotoGroupEditor
+                  key={editing.id}
+                  tripId={editing.id}
+                  photos={photos}
+                  initialGroups={editing.photo_groups}
+                  onSaved={groups => {
+                    setEditing(current => current?.id === editing.id ? { ...current, photo_groups: groups } : current);
+                    setTrips(current => current.map(trip => trip.id === editing.id ? { ...trip, photo_groups: groups } : trip));
+                  }}
+                />
               </div>
             )}
           </div>
