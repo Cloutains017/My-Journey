@@ -68,41 +68,23 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
     <div>
       <ReadingProgress />
 
-      {/* Cover hero - magazine style */}
-      <div className="relative isolate flex min-h-[400px] w-full flex-col justify-end overflow-hidden md:min-h-[50vh]">
-        {t.cover_image ? (
-          <TravelImage src={t.cover_image} alt={t.title} fill sizes="100vw" preload unoptimized className="object-cover scale-105" />
-        ) : (
-          <div className="absolute inset-0 bg-surface-cream-strong flex items-center justify-center">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-surface-cream-strong">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <path d="M21 15l-5-5L5 21" />
-            </svg>
-          </div>
+      <header data-trip-hero className="relative -mt-16 isolate min-h-[100svh] overflow-hidden bg-[#172234] text-white">
+        {t.cover_image && (
+          <TravelImage src={t.cover_image} alt="" fill sizes="100vw" preload unoptimized className="-z-10 object-cover object-center" />
         )}
-        {/* Fade into the page canvas before the text, keeping metadata clear on any cover. */}
-        <header className="relative z-10 mt-36 bg-[linear-gradient(to_bottom,transparent,var(--color-canvas)_6rem)] pt-28 pb-8">
-          <div className="max-w-3xl mx-auto px-8">
-            <div className="mb-4 flex flex-col gap-1 text-sm leading-relaxed text-muted font-sans sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
-              <span className="tabular-nums">
-                <time dateTime={t.date}>{t.date}</time>
-                {t.end_date && t.end_date !== t.date && <> — <time dateTime={t.end_date}>{t.end_date}</time></>}
-              </span>
-              {t.location && <>
-                <span className="hidden h-3 w-px bg-hairline sm:block" aria-hidden="true" />
-                <span className="text-body">{t.location}</span>
-              </>}
-            </div>
-            <h1 className="trip-title font-display font-normal text-ink break-words">
-              {t.title}
-            </h1>
-            <div className="mt-3">
-              <RatingBadge rating={t.rating} size="lg" />
-            </div>
-          </div>
-        </header>
-      </div>
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(12,20,31,0.56)_0%,rgba(12,20,31,0.28)_28%,rgba(12,20,31,0.56)_72%,rgba(12,20,31,0.7)_100%)]" aria-hidden="true" />
+        <div className="flex min-h-[100svh] flex-col items-center justify-center px-6 pb-16 pt-24 text-center">
+          {t.location && <p className="mb-6 text-xs font-medium tracking-[0.28em] text-white/85 sm:text-sm">{t.location}</p>}
+          <h1 className="trip-hero-title max-w-5xl break-words font-display text-[clamp(3rem,7vw,6rem)] leading-[1.12] font-normal tracking-[0.04em] text-balance drop-shadow-lg">
+            {t.title}
+          </h1>
+          <p className="mt-7 text-sm font-medium tracking-[0.2em] text-white/90">
+            <time dateTime={t.date}>{t.date}</time>
+            {t.end_date && t.end_date !== t.date && <> — <time dateTime={t.end_date}>{t.end_date}</time></>}
+          </p>
+          <div className="trip-hero-rating mt-8"><RatingBadge rating={t.rating} size="lg" /></div>
+        </div>
+      </header>
 
       <article className="max-w-3xl mx-auto px-8 py-10">
         {/* Back button */}

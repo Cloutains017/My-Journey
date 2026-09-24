@@ -9,12 +9,26 @@ function subscribeTheme(onChange: () => void) {
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
   return () => observer.disconnect();
 }
+function subscribeHero(onChange: () => void) {
+  window.addEventListener("scroll", onChange, { passive: true });
+  window.addEventListener("resize", onChange);
+  return () => {
+    window.removeEventListener("scroll", onChange);
+    window.removeEventListener("resize", onChange);
+  };
+}
+function getHeroPassed() {
+  const hero = document.querySelector("[data-trip-hero]");
+  return !hero || hero.getBoundingClientRect().bottom <= 64;
+}
 const getTheme = () => document.documentElement.classList.contains("dark");
 const getServerTheme = () => false;
 
 export default function Nav() {
   const pathname = usePathname();
   const isDark = useSyncExternalStore(subscribeTheme, getTheme, getServerTheme);
+  const heroPassed = useSyncExternalStore(subscribeHero, getHeroPassed, getServerTheme);
+  const isTrip = pathname.startsWith("/trip/");
 
   function toggleDark() {
     const html = document.documentElement;
@@ -29,15 +43,15 @@ export default function Nav() {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-4 bg-canvas/80 backdrop-blur-2xl border-b border-hairline">
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+    <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-4 transition-colors duration-300 ${isTrip ? heroPassed ? "trip-nav bg-[#1e293b] text-white shadow-lg" : "trip-nav bg-transparent text-white" : "bg-canvas/80 backdrop-blur-2xl border-b border-hairline"}`}>
+      {!isTrip && <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />}
 
       <Link href="/" className="flex items-center gap-2.5 group">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={isTrip ? "text-[#f4d49d]" : "text-primary"}>
           <path d="M12 2L2 22h20L12 2z" />
           <path d="M12 2l4 10H8l4-10z" opacity="0.4" />
         </svg>
-        <span className="font-display text-xl tracking-[-0.5px] text-ink group-hover:text-primary transition-colors">
+        <span className={`font-display text-xl tracking-[-0.5px] transition-colors ${isTrip ? "text-white group-hover:text-[#f4d49d]" : "text-ink group-hover:text-primary"}`}>
           Cloutains的旅程
         </span>
       </Link>
@@ -48,7 +62,7 @@ export default function Nav() {
             key={href}
             href={href}
             className={`relative text-sm font-medium transition-colors pb-1 ${
-              pathname === href
+              isTrip ? "text-white/85 hover:text-white" : pathname === href
                 ? "text-ink after:absolute after:bottom-[-17px] after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full"
                 : "text-muted hover:text-ink"
             }`}
@@ -58,7 +72,7 @@ export default function Nav() {
         ))}
         <button
           onClick={toggleDark}
-          className="ml-2 p-1.5 rounded-lg text-muted hover:text-ink hover:bg-surface-soft transition-all"
+          className={`ml-2 p-1.5 rounded-lg transition-all ${isTrip ? "text-white/85 hover:text-white hover:bg-white/10" : "text-muted hover:text-ink hover:bg-surface-soft"}`}
           aria-label="切换暗黑模式"
         >
           {isDark ? (
@@ -83,7 +97,7 @@ export default function Nav() {
             key={href}
             href={href}
             className={`text-sm font-medium transition-colors ${
-              pathname === href
+              isTrip ? "text-white/85 hover:text-white" : pathname === href
                 ? "text-ink"
                 : "text-muted hover:text-ink"
             }`}
@@ -93,7 +107,7 @@ export default function Nav() {
         ))}
         <button
           onClick={toggleDark}
-          className="p-1 rounded-lg text-muted hover:text-ink transition-colors"
+          className={`p-1 rounded-lg transition-colors ${isTrip ? "text-white/85 hover:text-white" : "text-muted hover:text-ink"}`}
           aria-label="切换暗黑模式"
         >
           {isDark ? (

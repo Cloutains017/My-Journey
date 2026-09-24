@@ -101,6 +101,21 @@ h2 {
   text-wrap: balance;
 }
 
+.trip-hero-title {
+  color: #f4d49d;
+}
+
+.trip-hero-rating > span {
+  color: #f4d49d;
+  background: rgb(12 20 31 / 0.35);
+  border-color: rgb(244 212 157 / 0.65);
+}
+
+.trip-nav a,
+.trip-nav button {
+  color: #fff;
+}
+
 /* ── Inline links ── */
 a {
   color: var(--color-primary);
