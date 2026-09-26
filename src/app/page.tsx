@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase";
+import { unstable_cache } from "next/cache";
+import { connection } from "next/server";
 import HeroMap from "@/components/HeroMap";
 import TripCard from "@/components/TripCard";
 import MilestoneMarker from "@/components/MilestoneMarker";
@@ -6,7 +8,15 @@ import YearNav from "@/components/YearNav";
 import { groupTripsByCity } from "@/lib/city-data";
 import type { Trip, Milestone } from "@/lib/types";
 
-export const revalidate = 3600;
+const getTrips = unstable_cache(
+  async () => {
+    const { data, error } = await supabase.from("trips").select("*, photos(count)").order("date", { ascending: false });
+    if (error) throw new Error("暂时无法加载旅程，请稍后重试");
+    return data || [];
+  },
+  ["home-trips"],
+  { revalidate: 3600 },
+);
 
 const MILESTONES: Milestone[] = [
   { id: "ms-2010", title: "第一天背起书包", subtitle: "厦门市同安区第一实验小学", date: "2010-09-01", icon: "school" },
@@ -21,13 +31,9 @@ type TimelineItem =
   | { kind: "milestone"; data: Milestone };
 
 export default async function HomePage() {
-  const { data: trips, error } = await supabase
-    .from("trips")
-    .select("*, photos(count)")
-    .order("date", { ascending: false });
-
-  if (error) throw new Error("暂时无法加载旅程，请稍后重试");
-  const tripList = (trips || []).map((row) => {
+  await connection();
+  const trips = await getTrips();
+  const tripList = trips.map((row) => {
     const { photos, ...trip } = row as Omit<Trip, "photos"> & { photos: { count: number }[] };
     return { ...trip, photo_count: photos[0]?.count ?? 0 };
   });

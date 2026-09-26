@@ -4,6 +4,7 @@ import { checkAuth } from '@/lib/admin-auth';
 import { UUID } from '@/lib/admin-security';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { r2Delete, r2KeyFromPublicUrl } from '@/lib/r2';
+import { photoDeletionKeys } from '@/lib/photo-variants';
 import { toRecycleEntry } from '@/lib/recycle-entry';
 
 type RecycledPhoto = { id: string; payload: { photos?: { url?: string }[] } };
@@ -68,7 +69,7 @@ export async function DELETE(request: Request) {
       const url = archive.payload.photos?.[0]?.url;
       try {
         if (!url) throw new Error('照片快照缺少原图地址');
-        await r2Delete(r2KeyFromPublicUrl(url));
+        for (const key of photoDeletionKeys(r2KeyFromPublicUrl(url))) await r2Delete(key);
         const { error } = await supabaseAdmin.rpc('admin_purge_archive', { archive_id: archive.id });
         if (error) throw new Error('照片原图已删除，但回收站记录尚未确认清除。请勿恢复这条记录，并联系管理员。');
         purgedIds.push(archive.id);

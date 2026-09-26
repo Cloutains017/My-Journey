@@ -71,7 +71,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
 
       <header data-trip-hero className="relative -mt-16 isolate min-h-[100svh] overflow-hidden bg-[#172234] text-white">
         {t.cover_image && (
-          <TravelImage src={t.cover_image} alt="" fill sizes="100vw" preload unoptimized className="-z-10 object-cover object-center" />
+          <TravelImage src={t.cover_image} alt="" fill sizes="100vw" preload variant="hero" className="-z-10 object-cover object-center" />
         )}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(12,20,31,0.56)_0%,rgba(12,20,31,0.28)_28%,rgba(12,20,31,0.56)_72%,rgba(12,20,31,0.7)_100%)]" aria-hidden="true" />
         <div className="flex min-h-[100svh] flex-col items-center justify-center px-6 pb-16 pt-24 text-center">

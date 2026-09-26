@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import TravelImage from "@/components/TravelImage";
+import { makePhotoVariants } from "@/lib/browser-photo-variants";
 import AdminSecurityPanel from "@/components/AdminSecurityPanel";
 import PhotoGroupEditor from "@/components/PhotoGroupEditor";
 import { RATING_LABELS, AGREEMENT_LABELS, DESIRE_LABELS, formatDateRange } from "@/lib/types";
@@ -130,6 +131,7 @@ export default function AdminClient() {
     try {
       for (const file of Array.from(files)) {
         if (file.size > 50 * 1024 * 1024) throw new Error("单张照片不能超过 50 MB");
+        const variants = await makePhotoVariants(file);
         const fileName = `${Date.now()}-${file.name}`;
 
         // 1. 获取签名 URL
@@ -142,7 +144,7 @@ export default function AdminClient() {
           const err = await presignRes.json();
           throw new Error(err.error || "获取上传凭证失败");
         }
-        const { presignedUrl, publicUrl } = await presignRes.json();
+        const { presignedUrl, thumbPresignedUrl, heroPresignedUrl, publicUrl } = await presignRes.json();
 
         // 2. 直传 R2
         const uploadRes = await fetch(presignedUrl, {
@@ -152,6 +154,17 @@ export default function AdminClient() {
         });
         if (!uploadRes.ok) {
           throw new Error(`上传失败: ${uploadRes.status}`);
+        }
+        for (const [url, blob] of [
+          [thumbPresignedUrl, variants.thumb],
+          [heroPresignedUrl, variants.hero],
+        ] as const) {
+          const variantRes = await fetch(url, {
+            method: "PUT",
+            body: blob,
+            headers: { "Content-Type": "image/webp" },
+          });
+          if (!variantRes.ok) throw new Error(`缩略图上传失败: ${variantRes.status}`);
         }
         publicUrls.push(publicUrl);
       }

@@ -13,6 +13,7 @@
     "city-boundaries:fetch": "tsx scripts/fetch-city-boundaries.ts",
     "r2:configure-cors": "tsx scripts/setup-r2-cors.ts",
     "r2:stats": "tsx scripts/check-r2-stats.ts",
+    "r2:backfill-variants": "node scripts/backfill-photo-variants.ts",
     "backup:data": "node scripts/backup-data.mjs",
     "backup:verify": "node scripts/verify-backup.mjs",
     "test:security-api": "node --test tests/security-api.integration.mjs"
@@ -26,7 +27,8 @@
     "leaflet": "^1.9.4",
     "next": "16.3.5",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "0.35.4"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",

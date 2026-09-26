@@ -62,7 +62,7 @@ copy .env.example .env.local
 | `CLOUDFLARE_*` | R2 账号、访问密钥、桶名和公开访问地址 |
 | `R2_CORS_ALLOWED_ORIGINS` | 可选：覆盖默认的 R2 浏览器上传允许来源列表 |
 
-修改 `ADMIN_PASSWORD` 或 `ADMIN_SESSION_SECRET` 并重新部署后，旧后台会话失效。请使用密码管理器生成独立的长密码；生产环境建议同时配置独立会话密钥。
+修改 `ADMIN_PASSWORD` 或已配置的 `ADMIN_SESSION_SECRET` 并重新部署后，旧后台会话失效。请使用密码管理器生成独立的长密码。
 
 ## 常用命令
 
@@ -76,9 +76,10 @@ copy .env.example .env.local
 | `npm run design:check` | 扫描 `src` 中的设计问题 |
 | `npm run city-boundaries:fetch` | 更新本地城市边界 GeoJSON |
 | `npm run r2:stats` | 查看 R2 对象数量和用量 |
+| `npm run r2:backfill-variants` | 统计旧照片缺少的列表图和头图；加 `-- --apply` 才会写入 R2 |
 | `npm run r2:configure-cors` | 写入 R2 的浏览器上传 CORS 规则 |
 | `npm run test:security-api` | 在本地临时数据库与 Next.js 服务上验证安全接口，不触碰正式数据 |
-| `npm run backup:data` | 导出业务数据与 R2 原图至 Git 忽略的 `backups/`，生成校验清单 |
+| `npm run backup:data` | 导出业务数据与 R2 图片对象至 Git 忽略的 `backups/`，生成校验清单 |
 | `npm run backup:verify -- backups/<快照目录>` | 校验备份文件，并在内存数据库演练业务数据恢复 |
 
 ## 数据保护
@@ -98,8 +99,6 @@ copy .env.example .env.local
 编辑旅程时，在“旅程照片”下方新建并命名照片分组，然后为每张照片选择分组、调整分组顺序，最后点击“保存照片分组”。未分组照片显示在最后；旧游记无需修改，仍按原照片墙展示。
 
 备份使用本机 `.env.local` 只读导出，包含私人审计数据，不能提交 Git 或放到公开网盘。可传入上次完整快照目录复用校验相同的图片：`npm run backup:data -- backups/<上次快照目录>`。只有 `manifest.json` 中 `complete: true` 才表示完成。恢复正式数据前先运行 `backup:verify`，并在隔离环境核对；不要直接覆盖已有正式数据。
-
-尚未自动完成的外部措施包括平台账号 MFA、网站后台 TOTP、定时异地备份、平台边缘限速规则，以及生产环境独立 `ADMIN_SESSION_SECRET` 的人工核对。本地导出不是数据库一致性快照，不能替代定期 `pg_dump` 和异地备份。
 
 ### 配置 R2 CORS
 
@@ -129,7 +128,8 @@ npm run r2:configure-cors
 
   测试使用 `.env.local` 的后台密码验证登录，会消耗登录尝试次数并写入登录审计；其余接口只验证未授权状态，不修改业务数据。完整删除/恢复测试使用 `test:security-api` 的隔离环境，运行前需关闭同目录中的其他 `next dev` 服务。
 
-- R2 图片经 Next.js Image 按显示尺寸加载，灯箱保留原图。外部封面地址按原地址展示。
+- 新上传的照片会保留 R2 原图，同时生成最长边 640 px 的列表图和 1920 px 的头图。照片墙、卡片及后台预览读取列表图，旅程头图读取较大版本，灯箱读取原图。图片不经过 Vercel Image Transformations；旧照片缺少变体时自动回退原图，外部封面仍按原地址展示。
+- 旧照片可先运行 `npm run r2:backfill-variants` 查看缺少数量，再运行 `npm run r2:backfill-variants -- --apply` 补生成。脚本只处理当前旅程和封面引用的 R2 原图，只新增缺少的 WebP 对象；回收站照片恢复后可重跑。可先用 `-- --apply --limit 10` 小批量检查。新上传若浏览器无法解码原图或生成 WebP，会提示先将图片转换为 JPEG 或 PNG。
 
 ## 部署
 

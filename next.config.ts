@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Serve R2's pre-generated variants and originals without invoking
+    // Vercel image transformations for each displayed size.
+    unoptimized: true,
     remotePatterns: [
       ...(process.env.CLOUDFLARE_R2_PUBLIC_URL
         ? [new URL(`${process.env.CLOUDFLARE_R2_PUBLIC_URL.replace(/\/$/, "")}/**`)]

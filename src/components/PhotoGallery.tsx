@@ -75,7 +75,7 @@ export default function PhotoGallery({ photos, title = "旅途影像" }: { photo
             alt={activePhoto.caption || "旅途照片"}
             width={activePhoto.width || 1200}
             height={activePhoto.height || 800}
-            unoptimized
+            variant="original"
             style={{ width: "auto", height: "auto" }}
             className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg animate-scale-in"
             onClick={(e) => e.stopPropagation()}

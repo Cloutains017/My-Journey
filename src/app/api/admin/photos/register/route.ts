@@ -4,6 +4,7 @@ import { checkAuth } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
 import { registeredPhotoKey, createPhotoKey, PHOTO_MAX_BYTES, UUID } from "@/lib/admin-security";
 import { r2PhotoInfo } from "@/lib/r2";
+import { photoVariantKey } from "@/lib/photo-variants";
 
 
 export async function POST(request: Request) {
@@ -20,8 +21,14 @@ export async function POST(request: Request) {
       const info = await r2PhotoInfo(key);
       createPhotoKey(tripId, info.ContentType);
       if (!info.ContentLength || info.ContentLength > PHOTO_MAX_BYTES) throw new Error("Invalid size");
+      for (const variant of ["thumb", "hero"] as const) {
+        const variantInfo = await r2PhotoInfo(photoVariantKey(key, variant));
+        if (variantInfo.ContentType !== "image/webp" || !variantInfo.ContentLength || variantInfo.ContentLength > 10 * 1024 * 1024) {
+          throw new Error("Invalid photo variant");
+        }
+      }
     }
-  } catch { return NextResponse.json({ error: "图片未上传完成、类型不支持或超过 50 MB" }, { status: 400 }); }
+  } catch { return NextResponse.json({ error: "图片或缩略图未上传完成、类型不支持或超过大小限制" }, { status: 400 }); }
 
   const { data: trip } = await supabaseAdmin
     .from("trips")
