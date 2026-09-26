@@ -127,7 +127,7 @@ export default function AdminClient() {
     setUploading(true);
     setError("");
 
-    const publicUrls: string[] = [];
+    let uploadedCount = 0;
     try {
       for (const file of Array.from(files)) {
         if (file.size > 50 * 1024 * 1024) throw new Error("单张照片不能超过 50 MB");
@@ -166,24 +166,31 @@ export default function AdminClient() {
           });
           if (!variantRes.ok) throw new Error(`缩略图上传失败: ${variantRes.status}`);
         }
-        publicUrls.push(publicUrl);
+        // Save each completed photo before starting the next one, so a later
+        // failure does not hide successfully uploaded photos from the gallery.
+        const registerRes = await fetch("/api/admin/photos/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tripId: editing.id, urls: [publicUrl] }),
+        });
+        if (!registerRes.ok) {
+          const err = await registerRes.json();
+          throw new Error(err.error || "注册照片失败");
+        }
+        uploadedCount++;
       }
 
-      // 3. 注册到数据库
-      const registerRes = await fetch("/api/admin/photos/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tripId: editing.id, urls: publicUrls }),
-      });
-      if (!registerRes.ok) {
-        const err = await registerRes.json();
-        throw new Error(err.error || "注册照片失败");
-      }
-
-      setMessage(`照片上传成功 · ${publicUrls.length} 张`);
-      fetchPhotos(editing.id);
+      setMessage(`照片上传成功 · ${uploadedCount} 张`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "上传失败");
+      const reason = err instanceof Error ? err.message : "上传失败";
+      setError(uploadedCount ? `${reason}；已保存 ${uploadedCount} 张照片` : reason);
+    }
+    if (uploadedCount) {
+      try {
+        await fetchPhotos(editing.id);
+      } catch {
+        setError("照片已保存，但列表刷新失败，请重新打开旅程查看");
+      }
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";

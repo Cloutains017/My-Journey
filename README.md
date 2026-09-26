@@ -10,7 +10,7 @@
 
 这是 Cloutains 的个人旅行档案：用地图、时间线、照片和文字记录每一段旅程。它服务于安静地回看、阅读和互动，不提供旅行预订、攻略分发或社交动态功能。
 
-界面以温暖、克制的编辑式排版呈现内容，强调地图、照片与文字本身。完整视觉规范见 [DESIGN.md](DESIGN.md)。
+界面以温暖、克制的编辑式排版呈现内容，强调地图、照片与文字本身。
 
 ## 功能
 
@@ -29,7 +29,7 @@
 | 样式 | Tailwind CSS 4 |
 | 数据库 | Supabase（PostgreSQL） |
 | 图片存储 | Cloudflare R2（S3 兼容） |
-| 地图 | Leaflet、react-leaflet 与高德底图 |
+| 地图 | Leaflet 与高德底图 |
 | 地理处理 | Turf.js |
 | 部署 | Vercel |
 
@@ -129,6 +129,7 @@ npm run r2:configure-cors
   测试使用 `.env.local` 的后台密码验证登录，会消耗登录尝试次数并写入登录审计；其余接口只验证未授权状态，不修改业务数据。完整删除/恢复测试使用 `test:security-api` 的隔离环境，运行前需关闭同目录中的其他 `next dev` 服务。
 
 - 新上传的照片会保留 R2 原图，同时生成最长边 640 px 的列表图和 1920 px 的头图。照片墙、卡片及后台预览读取列表图，旅程头图读取较大版本，灯箱读取原图。图片不经过 Vercel Image Transformations；旧照片缺少变体时自动回退原图，外部封面仍按原地址展示。
+- 批量上传逐张保存已完成的照片；中途失败时，已保存的照片会留在旅程中，后台会显示成功数量，可重新选择未完成的文件继续上传。
 - 旧照片可先运行 `npm run r2:backfill-variants` 查看缺少数量，再运行 `npm run r2:backfill-variants -- --apply` 补生成。脚本只处理当前旅程和封面引用的 R2 原图，只新增缺少的 WebP 对象；回收站照片恢复后可重跑。可先用 `-- --apply --limit 10` 小批量检查。新上传若浏览器无法解码原图或生成 WebP，会提示先将图片转换为 JPEG 或 PNG。
 
 ## 部署
@@ -150,13 +151,13 @@ scripts/
 ├── backup-data.mjs         # 数据及原图备份
 ├── verify-backup.mjs       # 校验与隔离恢复演练
 ├── check-r2-stats.ts        # R2 用量检查
+├── backfill-photo-variants.ts # 为旧照片补生成列表图和头图
 ├── fetch-city-boundaries.ts # 城市边界数据更新
 └── setup-r2-cors.ts         # R2 浏览器上传 CORS 配置
 supabase/schema.sql          # 数据库结构
 supabase/security.sql        # 权限、限速、审计、回收站与恢复
 public/data/city-boundaries.json # 城市边界静态数据
 tests/                       # 接口与组件行为测试
-DESIGN.md                    # 视觉设计规范
 ```
 
 ## 许可

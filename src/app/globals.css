@@ -2,7 +2,7 @@
 @import "leaflet/dist/leaflet.css";
 
 @theme {
-  /* ── Warm editorial palette (Claude.com design system) ── */
+  /* Warm editorial palette */
   --color-canvas: #faf9f5;
   --color-ink: #141413;
   --color-body: #3d3d3a;
