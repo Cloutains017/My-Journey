@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { groupTripPhotos, validatePhotoGroups } from "../src/lib/photo-groups.ts";
+import { assignPhotosToGroup, groupTripPhotos, validatePhotoGroups } from "../src/lib/photo-groups.ts";
 import type { Photo } from "../src/lib/types.ts";
 
 const a = "11111111-1111-4111-8111-111111111111";
@@ -31,4 +31,14 @@ test("validation rejects duplicate and foreign photo references", () => {
     { id: a, title: "山路", photoIds: [b] },
     { id: c, title: "日落", photoIds: [b] },
   ], new Set([b])), /重复/);
+});
+
+test("bulk assignment moves selected photos together and can clear their group", () => {
+  const groups = [
+    { id: a, title: "山路", photoIds: [a, b] },
+    { id: b, title: "日落", photoIds: [c] },
+  ];
+  const assigned = assignPhotosToGroup(groups, [b, c], b);
+  assert.deepEqual(assigned.map(group => group.photoIds), [[a], [b, c]]);
+  assert.deepEqual(assignPhotosToGroup(assigned, [b], "").map(group => group.photoIds), [[a], [c]]);
 });

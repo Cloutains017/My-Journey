@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { checkAuth } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
 import { archiveDelete } from "@/lib/admin-recycle";
+import { validatePhotoGroups } from "@/lib/photo-groups";
 
 
 function generateSlug(title: string, date?: string): string {
@@ -27,9 +28,20 @@ export async function PUT(
   const { id } = await params;
   const body = await request.json();
   const { title, slug: customSlug, date, end_date, location, city_name, latitude, longitude, cover_image, content, rating } = body;
+  let photoGroups;
+  if (Object.prototype.hasOwnProperty.call(body, "photo_groups")) {
+    const { data: photos, error: photosError } = await supabaseAdmin.from("photos").select("id").eq("trip_id", id);
+    if (photosError) return NextResponse.json({ error: "读取照片失败" }, { status: 500 });
+    try {
+      photoGroups = validatePhotoGroups(body.photo_groups, new Set((photos || []).map(photo => photo.id)));
+    } catch (reason) {
+      return NextResponse.json({ error: reason instanceof Error ? reason.message : "照片分组格式无效" }, { status: 400 });
+    }
+  }
   const slug = customSlug || generateSlug(title || "", date);
   const { error } = await supabaseAdmin.from("trips").update({
-    title, slug, date, end_date: end_date || null, location, city_name: city_name || null, latitude, longitude, cover_image: cover_image || null, content, rating
+    title, slug, date, end_date: end_date || null, location, city_name: city_name || null, latitude, longitude, cover_image: cover_image || null, content, rating,
+    ...(photoGroups === undefined ? {} : { photo_groups: photoGroups }),
   }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   revalidatePath("/");

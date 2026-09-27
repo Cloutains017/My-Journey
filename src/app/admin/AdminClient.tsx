@@ -8,12 +8,16 @@ import PhotoGroupEditor from "@/components/PhotoGroupEditor";
 import { RATING_LABELS, AGREEMENT_LABELS, DESIRE_LABELS, formatDateRange } from "@/lib/types";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
 import { deletePhotos } from "@/lib/photo-batch-delete";
+import { assignPhotosToGroup, type PhotoGroup } from "@/lib/photo-groups";
 
 export default function AdminClient() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [trips, setTrips] = useState<Trip[]>([]);
   const [editing, setEditing] = useState<Partial<Trip> | null>(null);
+  const [photoGroups, setPhotoGroups] = useState<PhotoGroup[]>([]);
+  const [bulkGroupId, setBulkGroupId] = useState("__select__");
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [photoRows, setPhotos] = useState<Photo[]>([]);
@@ -31,6 +35,8 @@ export default function AdminClient() {
 
   function openEditor(next: Partial<Trip> | null) {
     setSelection({ tripId: next?.id, ids: [] });
+    setPhotoGroups(Array.isArray(next?.photo_groups) ? next.photo_groups : []);
+    setBulkGroupId("__select__");
     setEditing(next);
   }
 
@@ -87,30 +93,41 @@ export default function AdminClient() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (deletingPhotosRef.current) return;
+    if (deletingPhotosRef.current || uploading || saving) return;
     if (!editing) return;
-    const tripData = { ...editing };
+    const available = new Set(photos.map(photo => photo.id));
+    const groups = photoGroups.map(group => ({ ...group, photoIds: group.photoIds.filter(id => available.has(id)) }));
+    const tripData = { ...editing, photo_groups: groups };
     const isNew = !tripData.id;
     const url = isNew ? "/api/admin/trips" : `/api/admin/trips/${tripData.id}`;
     const method = isNew ? "POST" : "PUT";
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(tripData),
-    });
-    if (res.ok) {
+    setSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tripData),
+      });
       const saved = await res.json();
-      setMessage(isNew ? "旅程已创建，现在可以上传照片" : "保存成功");
-      fetchTrips();
-      if (isNew && saved?.id) {
-        openEditor({ ...editing, id: saved.id });
-      } else {
-        openEditor(null);
-      }
-    } else {
-      const data = await res.json();
-      setError(data.error || "保存失败");
+      if (!res.ok) throw new Error(saved.error || "保存失败");
+      if (isNew && saved?.id) openEditor({ ...tripData, ...saved });
+      else setEditing({ ...tripData });
+      setMessage(isNew ? "旅程已创建，现在可以上传照片" : "旅程和照片分组已保存");
+      void fetchTrips();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "保存失败");
+    } finally {
+      setSaving(false);
     }
+  }
+
+  function handleBulkGroup() {
+    if (!selectedIds.length || bulkGroupId === "__select__" || (bulkGroupId && !photoGroups.some(group => group.id === bulkGroupId))) return;
+    setPhotoGroups(current => assignPhotosToGroup(current, selectedIds, bulkGroupId));
+    setSelection({ tripId: editingId, ids: [] });
+    setMessage("分组已调整，请点击顶部保存");
   }
 
   async function handleDelete(id: string) {
@@ -286,20 +303,20 @@ export default function AdminClient() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)]">
-      <aside className="w-52 p-6 border-r border-hairline flex-shrink-0">
-        <p className="text-sm font-bold text-ink mb-6">📋 管理面板</p>
-        <nav className="flex flex-col gap-4 text-sm">
+    <div className="flex min-h-[calc(100vh-64px)] flex-col lg:flex-row">
+      <aside className="sticky top-16 z-30 w-full flex-shrink-0 border-b border-hairline bg-canvas/95 px-4 py-3 backdrop-blur-lg lg:top-20 lg:w-52 lg:self-start lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-6">
+        <p className="hidden text-sm font-bold text-ink lg:mb-6 lg:block">📋 管理面板</p>
+        <nav aria-label="管理面板" className="flex gap-4 overflow-x-auto whitespace-nowrap text-sm lg:flex-col lg:overflow-visible">
           <button onClick={() => { setSecurityMode(false); openEditor(null); setMessage(""); setCommentsMode(false); fetchTrips(); }} className={`text-left transition-colors ${!commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
-            旅程列表
+            旅程管理
           </button>
           <button onClick={() => { setSecurityMode(false); openEditor(null); setCommentsMode(true); setMessage(""); fetchComments(); }} className={`text-left transition-colors ${commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             评论管理
           </button>
           <button onClick={() => { setSecurityMode(false); openEditor(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
-            + 新建旅程
+            新建旅程
           </button>
-          <button onClick={() => { setSecurityMode(true); openEditor(null); setMessage(""); setError(""); }} className={`text-left ${securityMode ? "text-ink font-semibold" : "text-muted"}`}>回收站与操作记录</button>
+          <button title="回收站与操作记录" onClick={() => { setSecurityMode(true); openEditor(null); setMessage(""); setError(""); }} className={`text-left ${securityMode ? "text-ink font-semibold" : "text-muted"}`}>回收记录</button>
           <button onClick={async () => {
             try {
               const res = await fetch("/api/admin/auth", { method: "DELETE" });
@@ -310,9 +327,9 @@ export default function AdminClient() {
         </nav>
       </aside>
 
-      <main className="flex-1 p-8">
-        {message && <p className="text-sm text-accent-teal font-medium mb-4">{message}</p>}
-        {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
+      <main className="min-w-0 flex-1 p-4 sm:p-8">
+        {!editing && message && <p className="text-sm text-accent-teal font-medium mb-4">{message}</p>}
+        {!editing && error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
         {securityMode ? <AdminSecurityPanel /> : commentsMode ? (
           <>
@@ -383,8 +400,18 @@ export default function AdminClient() {
           </>
         ) : (
           <div className="max-w-2xl">
-            <form onSubmit={handleSave} className="flex flex-col gap-5">
-              <h3 className="text-lg font-bold text-ink">{editing.id ? "编辑旅程" : "新建旅程"}</h3>
+            <div className="sticky top-[7.5rem] z-20 -mx-4 mb-5 flex items-center justify-between gap-3 border-b border-hairline bg-canvas/95 px-4 py-3 backdrop-blur-lg lg:top-16">
+              <div className="min-w-0">
+                <h3 className="text-lg font-bold text-ink">{editing.id ? "编辑旅程" : "新建旅程"}</h3>
+                {message && <p role="status" className="truncate text-xs text-accent-teal">{message}</p>}
+                {error && <p role="alert" className="truncate text-xs text-red-500" title={error}>{error}</p>}
+              </div>
+              <div className="flex flex-shrink-0 items-center gap-2">
+                <button type="button" onClick={() => openEditor(null)} className="rounded-lg border border-hairline bg-surface-card px-4 py-2 text-sm text-muted hover:text-ink">取消</button>
+                <button type="submit" form="trip-editor-form" disabled={saving || deletingPhotos || uploading} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-active disabled:opacity-50">{saving ? "保存中…" : "保存全部"}</button>
+              </div>
+            </div>
+            <form id="trip-editor-form" onSubmit={handleSave} className="flex flex-col gap-5">
 
               <div>
                 <label className="text-xs text-muted mb-1.5 block">标题</label>
@@ -494,12 +521,6 @@ export default function AdminClient() {
                   rows={8} className={`${inputClass} resize-none`} />
               </div>
 
-              <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => { openEditor(null); }}
-                  className="px-7 py-2.5 bg-surface-card border border-hairline rounded-lg text-sm text-muted hover:text-ink transition-colors">取消</button>
-                <button type="submit" disabled={deletingPhotos}
-                  className="px-7 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:bg-primary-active transition-colors">保存旅程</button>
-              </div>
             </form>
 
             {/* Photo Management Section */}
@@ -514,6 +535,17 @@ export default function AdminClient() {
                       {selectedIds.length === photos.length ? "取消全选" : "全选"}
                     </button>
                     <span className="text-sm text-body" role="status">已选 {selectedIds.length} / {photos.length} 张</span>
+                    <select aria-label="批量分组目标" value={bulkGroupId} onChange={event => setBulkGroupId(event.target.value)} disabled={deletingPhotos || uploading}
+                      className="min-h-10 rounded-lg border border-hairline bg-canvas px-2 text-sm text-ink disabled:opacity-50">
+                      <option value="__select__" disabled>选择分组</option>
+                      <option value="">未分组</option>
+                      {photoGroups.map(group => <option key={group.id} value={group.id}>{group.title}</option>)}
+                    </select>
+                    <button type="button" disabled={!selectedIds.length || bulkGroupId === "__select__" || deletingPhotos || uploading}
+                      onClick={handleBulkGroup}
+                      className="min-h-10 rounded-lg border border-hairline px-3 text-sm font-medium text-ink hover:border-primary disabled:opacity-50">
+                      批量分组
+                    </button>
                     <button type="button" disabled={!selectedIds.length || deletingPhotos || uploading}
                       onClick={() => handlePhotoDelete(selectedIds)}
                       className="px-3 py-2 rounded-lg bg-red-700 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
@@ -585,13 +617,9 @@ export default function AdminClient() {
                 </div>
                 <PhotoGroupEditor
                   key={editing.id}
-                  tripId={editing.id}
                   photos={photos}
-                  initialGroups={editing.photo_groups}
-                  onSaved={groups => {
-                    setEditing(current => current?.id === editing.id ? { ...current, photo_groups: groups } : current);
-                    setTrips(current => current.map(trip => trip.id === editing.id ? { ...trip, photo_groups: groups } : trip));
-                  }}
+                  groups={photoGroups}
+                  onChange={setPhotoGroups}
                 />
               </div>
             )}

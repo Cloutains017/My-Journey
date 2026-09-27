@@ -6,6 +6,18 @@ export interface PhotoGroup {
   photoIds: string[];
 }
 
+export function assignPhotosToGroup(groups: PhotoGroup[], photoIds: string[], groupId: string): PhotoGroup[] {
+  const selected = new Set(photoIds);
+  if (!selected.size) return groups;
+  return groups.map(group => ({
+    ...group,
+    photoIds: [
+      ...group.photoIds.filter(id => !selected.has(id)),
+      ...(group.id === groupId ? [...selected] : []),
+    ],
+  }));
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function validatePhotoGroups(input: unknown, ownedPhotoIds: Set<string>): PhotoGroup[] {
