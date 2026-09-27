@@ -17,6 +17,7 @@ export default function AdminClient() {
   const [editing, setEditing] = useState<Partial<Trip> | null>(null);
   const [photoGroups, setPhotoGroups] = useState<PhotoGroup[]>([]);
   const [bulkGroupId, setBulkGroupId] = useState("__select__");
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -31,12 +32,31 @@ export default function AdminClient() {
   const [deletingPhotos, setDeletingPhotos] = useState(false);
   const deletingPhotosRef = useRef(false);
   const selectedIds = selection.tripId === editingId ? selection.ids.filter(id => photos.some(photo => photo.id === id)) : [];
+  const activePreviewIndex = previewIndex === null || photos.length === 0 ? null : previewIndex % photos.length;
+  const activePreviewPhoto = activePreviewIndex === null ? null : photos[activePreviewIndex];
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (previewIndex === null || photos.length === 0) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") { event.preventDefault(); setPreviewIndex(null); }
+      if (event.key === "ArrowRight") { event.preventDefault(); setPreviewIndex(index => index === null ? null : (index + 1) % photos.length); }
+      if (event.key === "ArrowLeft") { event.preventDefault(); setPreviewIndex(index => index === null ? null : (index - 1 + photos.length) % photos.length); }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [previewIndex, photos.length]);
 
   function openEditor(next: Partial<Trip> | null) {
     setSelection({ tripId: next?.id, ids: [] });
     setPhotoGroups(Array.isArray(next?.photo_groups) ? next.photo_groups : []);
     setBulkGroupId("__select__");
+    setPreviewIndex(null);
     setEditing(next);
   }
 
@@ -392,7 +412,6 @@ export default function AdminClient() {
                     <p className="text-xs text-muted">{formatDateRange(trip.date, trip.end_date)} · {RATING_LABELS[trip.rating]}</p>
                   </div>
                   <button onClick={() => openEditor(trip)} className="text-xs text-muted hover:text-ink transition-colors">编辑</button>
-                  <button onClick={() => { openEditor(trip); }} className="text-xs text-primary/70 hover:text-primary transition-colors">照片</button>
                   <button onClick={() => handleDelete(trip.id)} className="text-xs text-red-400/60 hover:text-red-500 transition-colors">删除</button>
                 </div>
               ))}
@@ -527,6 +546,11 @@ export default function AdminClient() {
             {editing.id && (
               <div className="mt-10 pt-8 border-t border-hairline">
                 <h3 className="text-lg font-bold text-ink mb-4">📷 旅程照片 · {photos.length} 张</h3>
+                <PhotoGroupEditor
+                  photos={photos}
+                  groups={photoGroups}
+                  onChange={setPhotoGroups}
+                />
                 {photos.length > 0 && (
                   <div className="flex flex-wrap items-center gap-3 mb-4">
                     <button type="button" disabled={deletingPhotos || uploading}
@@ -558,28 +582,43 @@ export default function AdminClient() {
                 {photos.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6" aria-busy={deletingPhotos}>
                     {photos.map((photo, index) => (
-                      <div key={photo.id} className={`relative group aspect-square rounded-lg overflow-hidden bg-surface-cream-strong ${selectedIds.includes(photo.id) ? "ring-2 ring-primary ring-offset-2" : ""}`}>
-                        <TravelImage src={photo.url} alt={photo.caption || "旅程照片"} width={320} height={240} className="w-full h-full object-cover" />
-                        <label className="absolute top-1 left-1 z-10 flex items-center justify-center w-11 h-11 rounded-lg bg-black/70 cursor-pointer">
-                          <input type="checkbox" checked={selectedIds.includes(photo.id)} disabled={deletingPhotos || uploading}
-                            aria-label={`选择第 ${index + 1} 张照片${photo.caption ? `：${photo.caption}` : ""}`}
-                            onChange={event => setSelection({ tripId: editingId, ids: event.target.checked ? [...selectedIds, photo.id] : selectedIds.filter(id => id !== photo.id) })}
-                            className="w-5 h-5 accent-primary" />
-                        </label>
-                        <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 flex flex-wrap items-center justify-center gap-2">
-                          <button type="button" disabled={deletingPhotos}
-                            onClick={() => setEditing({ ...editing, cover_image: photo.url })}
-                            className="px-2 py-1 rounded bg-canvas text-ink text-xs font-semibold hover:bg-white"
-                          >
-                            设为封面
+                      <div key={photo.id} className={`overflow-hidden rounded-lg border border-hairline bg-surface-card ${selectedIds.includes(photo.id) ? "ring-2 ring-primary ring-offset-2" : ""}`}>
+                        <div className="relative aspect-square overflow-hidden bg-surface-cream-strong">
+                          <button type="button" onClick={() => setPreviewIndex(index)} aria-label={`预览第 ${index + 1} 张照片${photo.caption ? `：${photo.caption}` : ""}`}
+                            className="block h-full w-full cursor-zoom-in focus-visible:outline-2 focus-visible:outline-primary">
+                            <TravelImage src={photo.url} alt={photo.caption || "旅程照片"} width={320} height={240} className="h-full w-full object-cover" />
+                            <span className="absolute right-2 top-2 rounded bg-black/60 px-2 py-1 text-xs text-white">预览</span>
                           </button>
-                          <button type="button" disabled={deletingPhotos || uploading} aria-label={`删除第 ${index + 1} 张照片`}
-                            onClick={() => handlePhotoDelete([photo.id])}
-                            className="w-6 h-6 rounded-full bg-red-500/80 text-white text-xs flex items-center justify-center hover:bg-red-500"
-                          >
-                            ✕
-                          </button>
+                          <label className="absolute top-1 left-1 z-10 flex items-center justify-center w-11 h-11 rounded-lg bg-black/70 cursor-pointer">
+                            <input type="checkbox" checked={selectedIds.includes(photo.id)} disabled={deletingPhotos || uploading}
+                              aria-label={`选择第 ${index + 1} 张照片${photo.caption ? `：${photo.caption}` : ""}`}
+                              onChange={event => setSelection({ tripId: editingId, ids: event.target.checked ? [...selectedIds, photo.id] : selectedIds.filter(id => id !== photo.id) })}
+                              className="w-5 h-5 accent-primary" />
+                          </label>
+                          <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 flex flex-wrap items-center justify-center gap-2">
+                            <button type="button" disabled={deletingPhotos}
+                              onClick={() => setEditing({ ...editing, cover_image: photo.url })}
+                              className="px-2 py-1 rounded bg-canvas text-ink text-xs font-semibold hover:bg-white"
+                            >
+                              设为封面
+                            </button>
+                            <button type="button" disabled={deletingPhotos || uploading} aria-label={`删除第 ${index + 1} 张照片`}
+                              onClick={() => handlePhotoDelete([photo.id])}
+                              className="w-6 h-6 rounded-full bg-red-500/80 text-white text-xs flex items-center justify-center hover:bg-red-500"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
+                        <label className="block p-2 text-xs text-muted">
+                          所属分组
+                          <select aria-label={`第 ${index + 1} 张照片的分组`} value={photoGroups.find(group => group.photoIds.includes(photo.id))?.id || ""}
+                            onChange={event => setPhotoGroups(current => assignPhotosToGroup(current, [photo.id], event.target.value))}
+                            className="mt-1 w-full rounded border border-hairline bg-canvas p-1.5 text-xs text-ink">
+                            <option value="">未分组</option>
+                            {photoGroups.map(group => <option key={group.id} value={group.id}>{group.title}</option>)}
+                          </select>
+                        </label>
                       </div>
                     ))}
                   </div>
@@ -615,17 +654,33 @@ export default function AdminClient() {
                     onChange={handlePhotoUpload}
                   />
                 </div>
-                <PhotoGroupEditor
-                  key={editing.id}
-                  photos={photos}
-                  groups={photoGroups}
-                  onChange={setPhotoGroups}
-                />
               </div>
             )}
           </div>
         )}
       </main>
+      {activePreviewPhoto && activePreviewIndex !== null && (
+        <div role="dialog" aria-modal="true" aria-label="照片预览"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setPreviewIndex(null)}>
+          <button type="button" autoFocus aria-label="关闭预览" onClick={() => setPreviewIndex(null)}
+            className="absolute right-4 top-4 z-10 rounded-full bg-black/60 px-3 py-2 text-xl text-white hover:bg-black">✕</button>
+          <TravelImage src={activePreviewPhoto.url} alt={activePreviewPhoto.caption || `第 ${activePreviewIndex + 1} 张照片`}
+            variant="original" width={activePreviewPhoto.width || 1200} height={activePreviewPhoto.height || 800}
+            style={{ width: "auto", height: "auto" }}
+            className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
+            onClick={event => event.stopPropagation()} />
+          {photos.length > 1 && (
+            <>
+              <button type="button" aria-label="上一张照片" onClick={event => { event.stopPropagation(); setPreviewIndex((activePreviewIndex - 1 + photos.length) % photos.length); }}
+                className="absolute left-2 top-1/2 rounded-full bg-black/60 px-3 py-2 text-2xl text-white hover:bg-black sm:left-6">‹</button>
+              <button type="button" aria-label="下一张照片" onClick={event => { event.stopPropagation(); setPreviewIndex((activePreviewIndex + 1) % photos.length); }}
+                className="absolute right-2 top-1/2 rounded-full bg-black/60 px-3 py-2 text-2xl text-white hover:bg-black sm:right-6">›</button>
+              <span className="absolute bottom-5 left-1/2 -translate-x-1/2 text-sm text-white">{activePreviewIndex + 1} / {photos.length}</span>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
