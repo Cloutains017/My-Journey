@@ -57,6 +57,7 @@ copy .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 项目地址 |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 浏览器端 Supabase 匿名密钥 |
 | `SUPABASE_SERVICE_ROLE_KEY` | 服务端 Supabase 密钥；不得暴露给浏览器 |
+| `SUPABASE_DB_URL` | 仅本地正式恢复时使用的数据库直连或 Session pooler 地址，端口 5432；无需配置到 Vercel |
 | `ADMIN_PASSWORD` | 管理后台密码 |
 | `ADMIN_SESSION_SECRET` | 可选的独立会话签名密钥，建议随机生成至少 32 字节 |
 | `CLOUDFLARE_*` | R2 账号、访问密钥、桶名和公开访问地址 |
@@ -81,6 +82,7 @@ copy .env.example .env.local
 | `npm run test:security-api` | 在本地临时数据库与 Next.js 服务上验证安全接口，不触碰正式数据 |
 | `npm run backup:data` | 导出业务数据与 R2 图片对象至 Git 忽略的 `backups/`，生成校验清单 |
 | `npm run backup:verify -- backups/<快照目录>` | 校验备份文件，并在内存数据库演练业务数据恢复 |
+| `npm run backup:restore -- backups/<快照目录>` | 校验快照并预演恢复；加 `--apply --target-ref <项目ref>` 才会补回缺失记录 |
 
 ## 数据保护
 
@@ -98,7 +100,7 @@ copy .env.example .env.local
 
 编辑旅程时，可在“旅程照片”区域新建、命名或排序分组，并在照片卡片上逐张选择分组；也可勾选多张照片，选择目标分组后点击“批量分组”。点击照片可预览原图，用左右箭头或键盘切换，按 Esc 关闭。完成后点击编辑区顶部固定的“保存全部”，旅程内容和照片分组会一起保存。未分组照片显示在最后；旧游记无需修改，仍按原照片墙展示。
 
-备份使用本机 `.env.local` 只读导出，包含私人审计数据，不能提交 Git 或放到公开网盘。可传入上次完整快照目录复用校验相同的图片：`npm run backup:data -- backups/<上次快照目录>`。只有 `manifest.json` 中 `complete: true` 才表示完成。恢复正式数据前先运行 `backup:verify`，并在隔离环境核对；不要直接覆盖已有正式数据。
+备份使用本机 `.env.local` 只读导出，包含私人审计数据，不能提交 Git 或放到公开网盘。可传入上次完整快照目录复用校验相同的图片：`npm run backup:data -- backups/<上次快照目录>`。只有 `manifest.json` 中 `complete: true` 才表示完成。恢复命令默认只预演；显式指定 `--apply` 和目标项目后才补回缺失数据，R2 补回需另加 `--with-r2`。完整步骤见 [备份与恢复使用说明](docs/backup-restore.md)。
 
 ### 配置 R2 CORS
 
@@ -150,6 +152,7 @@ src/
 scripts/
 ├── backup-data.mjs         # 数据及原图备份
 ├── verify-backup.mjs       # 校验与隔离恢复演练
+├── restore-backup.mjs      # 本地补回数据库记录与可选 R2 对象
 ├── check-r2-stats.ts        # R2 用量检查
 ├── backfill-photo-variants.ts # 为旧照片补生成列表图和头图
 ├── fetch-city-boundaries.ts # 城市边界数据更新

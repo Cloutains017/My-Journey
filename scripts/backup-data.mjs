@@ -6,6 +6,7 @@ import { mkdir, writeFile, readFile, copyFile } from 'node:fs/promises';
 import { createWriteStream, createReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import { resolve, join } from 'node:path';
+import { verifyBusinessRestore } from './backup-snapshot.mjs';
 
 config({ path: '.env.local', quiet: true });
 const required = name => {
@@ -19,7 +20,12 @@ const digest = async (file, algorithm = 'sha256') => {
 };
 const root = resolve('backups', new Date().toISOString().replace(/[:.]/g, '-'));
 await mkdir(join(root, 'objects'), { recursive: true });
-const manifest = { version: 1, startedAt: new Date().toISOString(), complete: false, tables: [], objects: [], skippedTables: [] };
+const manifest = {
+  version: 1,
+  startedAt: new Date().toISOString(),
+  source: { supabaseHost: new URL(required('NEXT_PUBLIC_SUPABASE_URL')).hostname, r2Bucket: required('CLOUDFLARE_R2_BUCKET') },
+  complete: false, tables: [], objects: [], skippedTables: [],
+};
 const save = () => writeFile(join(root, 'manifest.json'), JSON.stringify(manifest, null, 2));
 const reuseRoot = process.argv[2] ? resolve(process.argv[2]) : null;
 const previous = reuseRoot ? JSON.parse(await readFile(join(reuseRoot,'manifest.json'),'utf8')) : null;
@@ -28,6 +34,7 @@ const oldObjects = new Map((previous?.objects || []).map(item=>[item.key,item]))
 await save();
 try {
   const db = createClient(required('NEXT_PUBLIC_SUPABASE_URL'), required('SUPABASE_SERVICE_ROLE_KEY'));
+  const tableData = [];
   const tables = ['trips', 'photos', 'agreement_votes', 'desire_votes', 'city_boundaries', 'admin_recycle_bin', 'admin_audit_log'];
   for (const table of tables) {
     const rows = [];
@@ -50,6 +57,7 @@ try {
     const file = `${table}.json`;
     await writeFile(join(root, file), JSON.stringify(rows));
     manifest.tables.push({ table, file, count: rows.length, sha256: await digest(join(root, file)) });
+    tableData.push({ table, rows });
     console.log(`${table}: ${rows.length} rows`);
     await save();
   }
@@ -93,11 +101,13 @@ try {
   for (const item of manifest.tables) {
     if (JSON.parse(await readFile(join(root, item.file), 'utf8')).length !== item.count) throw new Error('Backup row count mismatch');
   }
+  await verifyBusinessRestore(tableData);
   manifest.complete = true;
   manifest.finishedAt = new Date().toISOString();
   await save();
   console.log(`Verified backup: ${root} (${manifest.objects.length} objects)`);
 } catch (error) {
+  manifest.complete = false;
   await save();
   console.error(`INCOMPLETE backup: ${root}. ${error.message}`);
   process.exitCode = 1;
