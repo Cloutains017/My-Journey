@@ -14,6 +14,7 @@ const id = "00000000-0000-0000-0000-000000000000";
 test("every admin data route rejects the legacy forged cookie before processing a request", options, async () => {
   const routes = [
     ["GET", "/trips"], ["POST", "/trips"], ["PUT", `/trips/${id}`], ["DELETE", `/trips/${id}`],
+    ["GET", "/education"], ["POST", "/education"], ["PUT", `/education/${id}`], ["DELETE", `/education/${id}`],
     ["PUT", `/trips/${id}/photo-groups`],
     ["GET", "/votes"], ["DELETE", `/votes/agreement/${id}`], ["DELETE", `/votes/desire/${id}`],
     ["POST", "/photos/presign"], ["POST", "/photos/register"],
@@ -46,6 +47,9 @@ test("login rejects malformed and missing passwords and permits a genuine sessio
   const res = await fetch(`${base}/api/admin/trips`, { headers: { Cookie: cookie.split(";")[0] } });
   assert.equal(res.status, 200);
   assert.equal(Array.isArray(await res.json()), true);
+  const education = await fetch(`${base}/api/admin/education`, { headers: { Cookie: cookie.split(";")[0] } });
+  assert.equal(education.status, 200);
+  assert.equal(Array.isArray(await education.json()), true);
 });
 
 test("missing and expired sessions are rejected by the running server", options, async () => {

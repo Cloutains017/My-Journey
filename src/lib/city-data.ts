@@ -74,18 +74,6 @@ export function matchCityBoundary(
   return null;
 }
 
-// ---------------------------------------------------------------------------
-// Highlighted pin locations (always shown on map, independent of trip data)
-// Coordinates in WGS-84. Domestic pins are converted for Gaode tiles; overseas pins are not.
-// ---------------------------------------------------------------------------
-export interface PinLocation {
-  name: string;
-  label?: string; // display text in popup, falls back to name
-  lat: number; // WGS-84
-  lng: number; // WGS-84
-  overseas?: boolean;
-}
-
 /** Canonical city identity shared by map popups and city counts. */
 export function groupTripsByCity<T extends { city_name: string | null; location: string }>(trips: T[]): Map<string, T[]> {
   const groups = new Map<string, T[]>();
@@ -106,9 +94,3 @@ export function getCityDisplayName<T extends { city_name: string | null }>(cityN
 
   return [...candidates].sort((a, b) => b.length - a.length)[0] ?? cityName;
 }
-
-export const PIN_LOCATIONS: PinLocation[] = [
-  { name: "厦门", label: "厦门·家", lat: 24.4798, lng: 118.0894 },
-  { name: "福州", label: "福州·福州大学", lat: 26.0745, lng: 119.2965 },
-  { name: "新加坡", label: "新加坡·南洋理工大学", lat: 1.305, lng: 103.82, overseas: true },
-];

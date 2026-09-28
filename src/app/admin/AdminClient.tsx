@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import TravelImage from "@/components/TravelImage";
 import { makePhotoVariants } from "@/lib/browser-photo-variants";
 import AdminSecurityPanel from "@/components/AdminSecurityPanel";
+import EducationAdmin from "@/components/EducationAdmin";
 import PhotoGroupEditor from "@/components/PhotoGroupEditor";
 import { RATING_LABELS, AGREEMENT_LABELS, DESIRE_LABELS, formatDateRange } from "@/lib/types";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
@@ -24,6 +25,7 @@ export default function AdminClient() {
   const [photoRows, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState(false);
   const [commentsMode, setCommentsMode] = useState(false);
+  const [educationMode, setEducationMode] = useState(false);
   const [securityMode, setSecurityMode] = useState(false);
   const [comments, setComments] = useState<{ agreements: (AgreementVote & { trips?: { title: string } | null })[], desires: (DesireVote & { trips?: { title: string } | null })[] }>({ agreements: [], desires: [] });
   const photos = photoRows.filter((photo) => photo.trip_id === editing?.id);
@@ -327,16 +329,17 @@ export default function AdminClient() {
       <aside className="sticky top-16 z-30 w-full flex-shrink-0 border-b border-hairline bg-canvas/95 px-4 py-3 backdrop-blur-lg lg:top-20 lg:w-52 lg:self-start lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-6">
         <p className="hidden text-sm font-bold text-ink lg:mb-6 lg:block">📋 管理面板</p>
         <nav aria-label="管理面板" className="flex gap-4 overflow-x-auto whitespace-nowrap text-sm lg:flex-col lg:overflow-visible">
-          <button onClick={() => { setSecurityMode(false); openEditor(null); setMessage(""); setCommentsMode(false); fetchTrips(); }} className={`text-left transition-colors ${!commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setSecurityMode(false); setEducationMode(false); openEditor(null); setMessage(""); setCommentsMode(false); fetchTrips(); }} className={`text-left transition-colors ${!commentsMode && !securityMode && !educationMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             旅程管理
           </button>
-          <button onClick={() => { setSecurityMode(false); openEditor(null); setCommentsMode(true); setMessage(""); fetchComments(); }} className={`text-left transition-colors ${commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setEducationMode(true); setSecurityMode(false); setCommentsMode(false); openEditor(null); setError(""); setMessage(""); }} className={`text-left transition-colors ${educationMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>求学经历</button>
+          <button onClick={() => { setEducationMode(false); setSecurityMode(false); openEditor(null); setCommentsMode(true); setMessage(""); fetchComments(); }} className={`text-left transition-colors ${commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             评论管理
           </button>
-          <button onClick={() => { setSecurityMode(false); openEditor(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
+          <button onClick={() => { setEducationMode(false); setSecurityMode(false); openEditor(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
             新建旅程
           </button>
-          <button title="回收站与操作记录" onClick={() => { setSecurityMode(true); openEditor(null); setMessage(""); setError(""); }} className={`text-left ${securityMode ? "text-ink font-semibold" : "text-muted"}`}>回收记录</button>
+          <button title="回收站与操作记录" onClick={() => { setEducationMode(false); setSecurityMode(true); openEditor(null); setMessage(""); setError(""); }} className={`text-left ${securityMode ? "text-ink font-semibold" : "text-muted"}`}>回收记录</button>
           <button onClick={async () => {
             try {
               const res = await fetch("/api/admin/auth", { method: "DELETE" });
@@ -351,7 +354,7 @@ export default function AdminClient() {
         {!editing && message && <p className="text-sm text-accent-teal font-medium mb-4">{message}</p>}
         {!editing && error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
-        {securityMode ? <AdminSecurityPanel /> : commentsMode ? (
+        {educationMode ? <EducationAdmin /> : securityMode ? <AdminSecurityPanel /> : commentsMode ? (
           <>
             <div className="flex justify-between items-center mb-6">
               <div>

@@ -77,11 +77,13 @@ export const DESIRE_LABELS: Record<number, string> = {
   5: "永不踏足",
 };
 
-export interface Milestone {
+export interface Education {
   id: string;
-  title: string;
-  subtitle?: string;
-  date: string; // YYYY-MM-DD
-  icon: "school" | "middle" | "high" | "uni" | "grad";
-  stage?: string; // overrides the default stage label derived from icon
+  degree: string;
+  school: string;
+  date: string;
+  location: string;
+  city_name: string | null;
+  latitude: number;
+  longitude: number;
 }
