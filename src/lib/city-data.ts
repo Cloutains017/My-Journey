@@ -110,5 +110,5 @@ export function getCityDisplayName<T extends { city_name: string | null }>(cityN
 export const PIN_LOCATIONS: PinLocation[] = [
   { name: "厦门", label: "厦门·家", lat: 24.4798, lng: 118.0894 },
   { name: "福州", label: "福州·福州大学", lat: 26.0745, lng: 119.2965 },
-  { name: "新加坡", label: "新加坡·南洋理工大学", lat: 1.3521, lng: 103.8198, overseas: true },
+  { name: "新加坡", label: "新加坡·南洋理工大学", lat: 1.305, lng: 103.82, overseas: true },
 ];
