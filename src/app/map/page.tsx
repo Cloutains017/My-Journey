@@ -78,6 +78,7 @@ export default function MapPage() {
         zoomControl: false,
         renderer: L.canvas(),
       });
+      map.attributionControl.setPrefix(false);
 
       let tileFailCount = 0;
       const gaode = L.tileLayer(GAODE_URL, {
