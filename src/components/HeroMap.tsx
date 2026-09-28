@@ -7,7 +7,7 @@ import type { Trip } from "@/lib/types";
 import { formatDateRange, RATING_LABELS } from "@/lib/types";
 import { getCityDisplayName, matchCityBoundary, groupTripsByCity, PIN_LOCATIONS } from "@/lib/city-data";
 import type { FeatureCollection } from "@/lib/city-data";
-import { wgs84ToGcj02 } from "@/lib/coords";
+import { mapPoint } from "@/lib/coords";
 
 // ---- Rating color map ----
 const RATING_COLORS: Record<number, string> = {
@@ -173,14 +173,14 @@ export default function HeroMap({ trips }: { trips: Trip[] }) {
           layersRef.current.push(glow, main);
         } else {
           // No boundary found — show clickable circle marker with pulse ring
-          const gcj = wgs84ToGcj02(cityTrips[0].latitude, cityTrips[0].longitude);
+          const point = mapPoint(cityTrips[0].latitude, cityTrips[0].longitude, cityTrips[0].city_name === null);
 
-          const pulse = L.circleMarker([gcj.lat, gcj.lng], {
+          const pulse = L.circleMarker([point.lat, point.lng], {
             radius: 14, fillColor: c, color: c,
             weight: 1.5, opacity: 0.35, fillOpacity: 0.12,
           }).addTo(map);
 
-          const circle = L.circleMarker([gcj.lat, gcj.lng], {
+          const circle = L.circleMarker([point.lat, point.lng], {
             radius: 7, fillColor: c, color: c,
             weight: 2, opacity: 0.9, fillOpacity: 0.45,
           }).addTo(map);
@@ -222,7 +222,7 @@ export default function HeroMap({ trips }: { trips: Trip[] }) {
 
       // --- Highlighted pin markers (always visible) ---
       PIN_LOCATIONS.forEach((pin) => {
-        const gcj = wgs84ToGcj02(pin.lat, pin.lng);
+        const point = mapPoint(pin.lat, pin.lng, pin.overseas === true);
         const pinIcon = L.divIcon({
           className: "pin-marker",
           html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="26" height="39"><path d="M12 0C5.37 0 0 5.37 0 12c0 7.85 9.13 19.62 12 24 2.87-4.38 12-16.15 12-24C24 5.37 18.63 0 12 0z" fill="#e8a55a" stroke="#fff" stroke-width="1.5"/><circle cx="12" cy="10" r="4" fill="#fff" opacity="0.9"/></svg>`,
@@ -230,7 +230,7 @@ export default function HeroMap({ trips }: { trips: Trip[] }) {
           iconAnchor: [13, 39],
           popupAnchor: [0, -39],
         });
-        const marker = L.marker([gcj.lat, gcj.lng], { icon: pinIcon }).addTo(map);
+        const marker = L.marker([point.lat, point.lng], { icon: pinIcon }).addTo(map);
         marker.bindPopup(`
           <div style="color:#fff;background:#252320;padding:10px 14px;border-radius:10px;font-family:system-ui;min-width:140px;text-align:center;">
             <div style="font-weight:700;font-size:14px;">📍 ${pin.label || pin.name}</div>

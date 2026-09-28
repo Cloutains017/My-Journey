@@ -49,3 +49,8 @@ export function wgs84ToGcj02(
 
   return { lat: lat + dLat, lng: lng + dLng };
 }
+
+/** The admin's overseas selection is authoritative; the China bounding box alone is not. */
+export function mapPoint(lat: number, lng: number, overseas: boolean): { lat: number; lng: number } {
+  return overseas ? { lat, lng } : wgs84ToGcj02(lat, lng);
+}
