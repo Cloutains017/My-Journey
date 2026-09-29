@@ -13,22 +13,29 @@ function escapeHtml(value: string): string {
 function popupContent(name: string, trips: Trip[], education: Education[]): string {
   const rows = [
     ...trips.map(trip => ({ date: trip.date, html: `
-      <div style="margin:4px 0;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;gap:6px;">
-        <a href="/trip/${escapeHtml(encodeURIComponent(trip.slug))}" style="color:#fff;text-decoration:none;font-size:12px;border-left:2px solid ${RATING_COLORS[trip.rating]};padding-left:6px;flex:1;min-width:0;" title="查看详情">
-          <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(trip.title)}</div>
-          <div style="color:#aaa;font-size:10px;">${escapeHtml(formatDateRange(trip.date, trip.end_date))}</div>
+      <div class="journey-popup-card" style="--journey-accent:${RATING_COLORS[trip.rating] ?? RATING_COLORS[5]}">
+        <a class="journey-popup-card__main" href="/trip/${escapeHtml(encodeURIComponent(trip.slug))}" title="查看旅程详情">
+          <span class="journey-popup-card__title">${escapeHtml(trip.title)}</span>
+          <span class="journey-popup-card__date">${escapeHtml(formatDateRange(trip.date, trip.end_date))}</span>
         </a>
-        <a href="/#year-${escapeHtml(trip.date.slice(0, 4))}" style="color:#aaa;text-decoration:none;font-size:10px;padding:3px 6px;border-radius:4px;background:rgba(255,255,255,.08);white-space:nowrap;">📍定位</a>
+        <a class="journey-popup-card__action" href="/#year-${escapeHtml(trip.date.slice(0, 4))}" title="在时间轴上定位">定位 <span aria-hidden="true">↗</span></a>
       </div>` })),
     ...education.map(item => ({ date: item.date, html: `
-      <a href="/#education-${escapeHtml(encodeURIComponent(item.id))}" style="display:block;color:#fff;text-decoration:none;border-left:2px solid ${EDUCATION_COLOR};padding:6px 8px;margin:4px 0;background:rgba(255,255,255,.05);border-radius:6px;">
-        <span style="display:block;font-size:12px;font-weight:600;">${escapeHtml(item.degree)} · ${escapeHtml(item.school)}</span>
-        <span style="display:block;color:#aaa;font-size:10px;">${escapeHtml(item.date)} 开始 · 查看卡片 →</span>
+      <a class="journey-popup-card" style="--journey-accent:${EDUCATION_COLOR}" href="/#education-${escapeHtml(encodeURIComponent(item.id))}" title="查看求学卡片">
+        <span class="journey-popup-card__main">
+          <span class="journey-popup-card__title">${escapeHtml(item.degree)} · ${escapeHtml(item.school)}</span>
+          <span class="journey-popup-card__date">${escapeHtml(item.date)} 开始</span>
+        </span>
+        <span class="journey-popup-card__action" aria-hidden="true">查看 <span>↗</span></span>
       </a>` })),
   ];
   rows.sort((a, b) => b.date.localeCompare(a.date));
-  return `<div style="color:#fff;background:#252320;padding:10px 14px;border-radius:10px;font-family:system-ui;min-width:200px;max-width:280px;max-height:220px;overflow-y:auto;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">${escapeHtml(name)}</div>${rows.map(row => row.html).join("")}
+  return `<div class="journey-popup">
+    <div class="journey-popup__header">
+      <span class="journey-popup__eyebrow">足迹 · ${rows.length} 条记录</span>
+      <strong class="journey-popup__title">${escapeHtml(name)}</strong>
+    </div>
+    <div class="journey-popup__list">${rows.map(row => row.html).join("")}</div>
   </div>`;
 }
 
@@ -53,7 +60,7 @@ export function addJourneyLayers(
       if (!feature) continue;
       const glow = L.geoJSON(feature, { style: { color: c, weight: 8, opacity: .15, fillColor: "transparent", fillOpacity: 0 } }).addTo(map);
       const region = L.geoJSON(feature, { style: { color: c, weight: 2, opacity: .8, fillColor: c, fillOpacity: .1 } }).addTo(map);
-      region.bindPopup(popup);
+      region.bindPopup(popup, { className: "journey-map-popup", maxWidth: 320 });
       region.on("mouseover", () => {
         region.setStyle({ fillOpacity: .25, opacity: 1, weight: 3 });
         glow.setStyle({ opacity: .35, weight: 14 });
@@ -77,8 +84,8 @@ export function addJourneyLayers(
     const point = mapPoint(first.latitude, first.longitude, true);
     const halo = L.circleMarker([point.lat, point.lng], { radius: 14, fillColor: c, color: c, weight: 1.5, opacity: .35, fillOpacity: .12 }).addTo(map);
     const marker = L.circleMarker([point.lat, point.lng], { radius: 7, fillColor: c, color: c, weight: 2, opacity: .9, fillOpacity: .45 }).addTo(map);
-    halo.bindPopup(popup);
-    marker.bindPopup(popup);
+    halo.bindPopup(popup, { className: "journey-map-popup", maxWidth: 320 });
+    marker.bindPopup(popup, { className: "journey-map-popup", maxWidth: 320 });
     marker.on("mouseover", () => { halo.setRadius(22); halo.setStyle({ opacity: .6, weight: 2 }); });
     marker.on("mouseout", () => { halo.setRadius(14); halo.setStyle({ opacity: .35, weight: 1.5 }); });
     for (const item of group.education) {

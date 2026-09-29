@@ -192,18 +192,152 @@ a {
   font-weight: 400;
 }
 
-/* ── Leaflet popup dark theme ── */
-.leaflet-popup-content-wrapper {
-  background: #252320 !important;
-  color: #faf9f5 !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5) !important;
+/* ── Journey map popups ── */
+.journey-map-popup .leaflet-popup-content-wrapper {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(238, 222, 197, 0.14);
+  border-radius: 16px;
+  background: #211f1d;
+  box-shadow: 0 18px 48px rgba(8, 7, 6, 0.34), 0 2px 10px rgba(8, 7, 6, 0.2);
 }
-.leaflet-popup-tip {
-  background: #252320 !important;
-}
-.leaflet-popup-content {
-  color: #faf9f5;
+.journey-map-popup .leaflet-popup-content {
+  width: 300px !important;
+  max-width: calc(100vw - 64px);
   margin: 0;
+  color: #f8f5ef;
+}
+.journey-map-popup .leaflet-popup-tip {
+  background: #211f1d;
+}
+.journey-map-popup .leaflet-popup-close-button {
+  top: 11px !important;
+  right: 11px !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  color: #d4c9ba !important;
+  font: 20px/25px var(--font-sans) !important;
+  text-align: center;
+  transition: background .2s, color .2s;
+}
+.journey-map-popup .leaflet-popup-close-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff !important;
+}
+.journey-popup {
+  font-family: var(--font-sans);
+}
+.journey-popup__header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 17px 48px 13px 17px;
+  border-bottom: 1px solid rgba(238, 222, 197, 0.1);
+  background: linear-gradient(120deg, #302b27, #211f1d 75%);
+}
+.journey-popup__eyebrow {
+  color: #c0a58d;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+}
+.journey-popup__title {
+  color: #f8f5ef;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.journey-popup__list {
+  display: grid;
+  gap: 8px;
+  max-height: min(222px, calc(100dvh - 280px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 10px 13px 14px;
+  scrollbar-color: rgba(207, 180, 149, .42) transparent;
+  scrollbar-width: thin;
+}
+.journey-popup__list::-webkit-scrollbar { width: 5px; }
+.journey-popup__list::-webkit-scrollbar-track { background: transparent; }
+.journey-popup__list::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: rgba(207, 180, 149, .42);
+}
+.journey-popup__list::-webkit-scrollbar-thumb:hover {
+  background: rgba(207, 180, 149, .7);
+}
+.journey-popup-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 61px;
+  padding: 9px 10px 9px 12px;
+  border: 1px solid rgba(238, 222, 197, .1);
+  border-radius: 10px;
+  background: #302d29;
+  box-shadow: inset 3px 0 var(--journey-accent);
+  color: #f8f5ef;
+  text-decoration: none;
+  transition: background .2s, border-color .2s, transform .2s;
+}
+.journey-popup-card:hover,
+.journey-popup-card:focus-within {
+  border-color: rgba(238, 222, 197, .25);
+  background: #39352f;
+  transform: translateY(-1px);
+}
+.journey-popup-card__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: inherit !important;
+  text-decoration: none;
+}
+.journey-popup-card__title {
+  overflow: hidden;
+  color: #f8f5ef;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.journey-popup-card__date {
+  color: #bcb3a7;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.journey-popup-card__action {
+  flex-shrink: 0;
+  padding: 6px 7px;
+  border: 1px solid rgba(238, 222, 197, .12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .045);
+  color: #dec7ae !important;
+  font-size: 10px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.journey-popup-card__action:hover {
+  border-color: rgba(238, 222, 197, .3);
+  background: rgba(255, 255, 255, .1);
+}
+.journey-popup-card__action span { margin-left: 2px; }
+.journey-map-popup a:focus-visible {
+  outline: 2px solid #e4bb90;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .journey-popup-card { transition: none; }
+  .journey-popup-card:hover,
+  .journey-popup-card:focus-within { transform: none; }
 }
 
 /* ── Dark mode ── */
