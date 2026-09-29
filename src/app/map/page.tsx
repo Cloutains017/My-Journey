@@ -7,17 +7,10 @@ import type L from "leaflet";
 import { supabase } from "@/lib/supabase";
 import type { Trip, Education } from "@/lib/types";
 import { DEFAULT_EDUCATION } from "@/lib/education";
-import { addEducationLayers } from "@/lib/map-education-layers";
-import { EDUCATION_COLOR } from "@/lib/education-map";
+import { addJourneyLayers } from "@/lib/map-journey-layers";
+import { EDUCATION_COLOR, RATING_COLORS } from "@/lib/education-map";
 import { formatDateRange, RATING_LABELS } from "@/lib/types";
-import { getCityDisplayName, matchCityBoundary, groupTripsByCity } from "@/lib/city-data";
 import type { FeatureCollection } from "@/lib/city-data";
-import { mapPoint } from "@/lib/coords";
-
-const RATING_COLORS: Record<number, string> = {
-  1: "#6b7280", 2: "#94a3b8", 3: "#66bb6a", 4: "#ffa726", 5: "#ff6b6b",
-};
-function color(r: number) { return RATING_COLORS[r] ?? "#ff6b6b"; }
 
 const GAODE_URL =
   "https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}";
@@ -124,132 +117,25 @@ export default function MapPage() {
   // Render city polygons + markers
   useEffect(() => {
     if (!mapReady) return;
+    let cancelled = false;
 
     getLeaflet().then(async (L) => {
       const map = mapInstanceRef.current;
-      if (!map) return;
+      if (!map || cancelled) return;
 
       layersRef.current.forEach((l) => l.remove());
       layersRef.current = [];
 
       const geoJSON = await loadBoundaries();
+      if (cancelled || mapInstanceRef.current !== map) return;
 
-      const cityMap = groupTripsByCity(trips);
-
-      cityMap.forEach((cityTrips, cityName) => {
-        const displayName = getCityDisplayName(cityName, cityTrips);
-        const avgRating = Math.round(cityTrips.reduce((s, t) => s + t.rating, 0) / cityTrips.length);
-        const c = color(avgRating);
-
-        const feature = geoJSON
-          ? matchCityBoundary(cityName, geoJSON)
-          : null;
-
-        if (feature) {
-          const glow = L.geoJSON(feature, {
-            style: () => ({
-              color: c, weight: 8, opacity: 0.15,
-              fillColor: "transparent", fillOpacity: 0,
-            }),
-          }).addTo(map);
-
-          const main = L.geoJSON(feature, {
-            style: () => ({
-              color: c, weight: 2, opacity: 0.8,
-              fillColor: c, fillOpacity: 0.1,
-            }),
-          }).addTo(map);
-
-          const html = cityTrips.map(
-            (t) => {
-              const year = t.date.slice(0, 4);
-              return `
-                <div style="margin:4px 0;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;gap:6px;">
-                  <a href="/trip/${t.slug}" style="color:#fff;text-decoration:none;font-size:12px;border-left:2px solid ${color(t.rating)};padding-left:6px;flex:1;min-width:0;" title="查看详情">
-                    <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title}</div>
-                    <div style="color:#888;font-size:10px;">${formatDateRange(t.date, t.end_date)}</div>
-                  </a>
-                  <a href="/#year-${year}" style="color:#888;text-decoration:none;font-size:10px;padding:3px 6px;border-radius:4px;background:rgba(255,255,255,0.08);white-space:nowrap;flex-shrink:0;" title="滚动到时间轴">📍定位</a>
-                </div>`;
-            }
-          ).join("");
-          main.bindPopup(`
-            <div style="color:#fff;background:#252320;padding:10px 14px;border-radius:10px;font-family:system-ui;min-width:200px;max-width:280px;">
-              <div style="font-weight:700;font-size:14px;margin-bottom:8px;">${displayName}</div>
-              ${html}
-            </div>
-          `);
-
-          main.on("mouseover", () => {
-            main.setStyle({ fillOpacity: 0.25, opacity: 1, weight: 3 });
-            glow.setStyle({ opacity: 0.35, weight: 14 });
-          });
-          main.on("mouseout", () => {
-            main.setStyle({ color: c, weight: 2, opacity: 0.8, fillColor: c, fillOpacity: 0.1 });
-            glow.setStyle({ color: c, weight: 8, opacity: 0.15, fillColor: "transparent", fillOpacity: 0 });
-          });
-
-          layersRef.current.push(glow, main);
-        } else {
-          // No boundary found — show clickable circle marker with pulse ring
-          const point = mapPoint(cityTrips[0].latitude, cityTrips[0].longitude, cityTrips[0].city_name === null);
-
-          const pulse = L.circleMarker([point.lat, point.lng], {
-            radius: 14, fillColor: c, color: c,
-            weight: 1.5, opacity: 0.35, fillOpacity: 0.12,
-          }).addTo(map);
-
-          const circle = L.circleMarker([point.lat, point.lng], {
-            radius: 7, fillColor: c, color: c,
-            weight: 2, opacity: 0.9, fillOpacity: 0.45,
-          }).addTo(map);
-
-          const html = cityTrips.map(
-            (t) => {
-              const year = t.date.slice(0, 4);
-              return `
-                <div style="margin:4px 0;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;gap:6px;">
-                  <a href="/trip/${t.slug}" style="color:#fff;text-decoration:none;font-size:12px;border-left:2px solid ${color(t.rating)};padding-left:6px;flex:1;min-width:0;" title="查看详情">
-                    <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title}</div>
-                    <div style="color:#888;font-size:10px;">${formatDateRange(t.date, t.end_date)}</div>
-                  </a>
-                  <a href="/#year-${year}" style="color:#888;text-decoration:none;font-size:10px;padding:3px 6px;border-radius:4px;background:rgba(255,255,255,0.08);white-space:nowrap;flex-shrink:0;" title="滚动到时间轴">📍定位</a>
-                </div>`;
-            }
-          ).join("");
-          const popupContent = `
-            <div style="color:#fff;background:#252320;padding:10px 14px;border-radius:10px;font-family:system-ui;min-width:200px;max-width:280px;">
-              <div style="font-weight:700;font-size:14px;margin-bottom:8px;">${cityTrips[0].location}</div>
-              ${html}
-            </div>
-          `;
-
-          circle.bindPopup(popupContent);
-          pulse.bindPopup(popupContent);
-
-          circle.on("mouseover", () => {
-            pulse.setRadius(22); pulse.setStyle({ opacity: 0.6, weight: 2 });
-          });
-          circle.on("mouseout", () => {
-            pulse.setRadius(14); pulse.setStyle({ opacity: 0.35, weight: 1.5 });
-          });
-
-          layersRef.current.push(pulse, circle);
-        }
-      });
-
-      const educationLayers = addEducationLayers(L, map, education, new Set(cityMap.keys()), geoJSON);
-      layersRef.current.push(...educationLayers.layers);
+      const journeyLayers = addJourneyLayers(L, map, trips, education, geoJSON);
+      layersRef.current.push(...journeyLayers.layers);
       const selected = new URLSearchParams(window.location.search).get("education");
-      if (selected) {
-        const marker = educationLayers.focus.get(selected);
-        if (marker) {
-          map.flyTo(marker.getLatLng(), Math.max(map.getZoom(), 9));
-          marker.openPopup();
-        }
-      }
+      if (selected) journeyLayers.focus.get(selected)?.();
 
     });
+    return () => { cancelled = true; };
   }, [trips, education, mapReady]);
 
   return (
