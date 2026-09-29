@@ -26,16 +26,21 @@ async function getLeaflet() {
 
 // ---- Client-side GeoJSON cache ----
 let _boundariesCache: FeatureCollection | null = null;
+let _boundariesPromise: Promise<FeatureCollection | null> | null = null;
 async function loadBoundaries(): Promise<FeatureCollection | null> {
   if (_boundariesCache) return _boundariesCache;
-  try {
-    const res = await fetch("/api/city-boundaries");
-    if (res.ok) {
-      _boundariesCache = await res.json();
-      return _boundariesCache;
-    }
-  } catch { /* ignore */ }
-  return null;
+  if (!_boundariesPromise) {
+    _boundariesPromise = (async () => {
+      try {
+        const res = await fetch("/api/city-boundaries");
+        if (!res.ok) return null;
+        _boundariesCache = await res.json();
+        return _boundariesCache;
+      } catch { return null; }
+      finally { _boundariesPromise = null; }
+    })();
+  }
+  return _boundariesPromise;
 }
 
 export default function HeroMap({ trips, education }: { trips: Trip[]; education: Education[] }) {
@@ -43,6 +48,8 @@ export default function HeroMap({ trips, education }: { trips: Trip[]; education
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layersRef = useRef<L.Layer[]>([]);
   const [mapReady, setMapReady] = useState(false);
+  const [highlightState, setHighlightState] = useState<"loading" | "ready" | "error">("loading");
+  const [retryCount, setRetryCount] = useState(0);
 
   // --- Init map ---
   useEffect(() => {
@@ -106,14 +113,35 @@ export default function HeroMap({ trips, education }: { trips: Trip[]; education
       if (cancelled || mapInstanceRef.current !== map) return;
 
       layersRef.current.push(...addJourneyLayers(L, map, trips, education, geoJSON).layers);
-
+      setHighlightState(geoJSON?.features.length ? "ready" : "error");
+    }).catch(() => {
+      if (!cancelled) setHighlightState("error");
     });
     return () => { cancelled = true; };
-  }, [trips, education, mapReady]);
+  }, [trips, education, mapReady, retryCount]);
 
   return (
     <div className="relative w-full h-[500px] overflow-hidden">
-      <div ref={mapRef} className="w-full h-full" role="img" aria-label="旅行足迹地图" />
+      <div ref={mapRef} className="w-full h-full" role="img" aria-label="旅行足迹地图" aria-busy={highlightState === "loading"} />
+
+      <div className="journey-map-loading" data-visible={highlightState === "loading"} aria-hidden={highlightState !== "loading"}>
+        <div className="journey-map-loading__content" role="status">
+          <svg className="journey-map-loading__icon" viewBox="0 0 112 72" fill="none" aria-hidden="true">
+            <path className="journey-map-loading__route" d="M16 54 C32 53 31 17 55 26 S76 57 96 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 7" />
+            <circle cx="16" cy="54" r="4" fill="#C5A5D9" />
+            <circle className="journey-map-loading__destination" cx="96" cy="15" r="5" fill="#E9BC94" />
+          </svg>
+          <span className="journey-map-loading__title">正在点亮旅程地图</span>
+          <span className="journey-map-loading__detail">沿着足迹，寻找去过的地方</span>
+        </div>
+      </div>
+
+      {highlightState === "error" && (
+        <div className="journey-map-error" role="status">
+          <span>高亮区域暂时未加载</span>
+          <button type="button" onClick={() => { setHighlightState("loading"); setRetryCount(count => count + 1); }}>重试</button>
+        </div>
+      )}
 
       {/* Rating legend */}
       <div className="absolute top-4 right-4 z-[1000] rounded-xl bg-black/55 backdrop-blur-xl border border-white/[0.12] px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">

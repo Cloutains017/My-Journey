@@ -334,10 +334,99 @@ a {
   outline: 2px solid #e4bb90;
   outline-offset: 2px;
 }
+
+/* ── Home map loading state ── */
+.journey-map-loading {
+  position: absolute;
+  z-index: 1100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(130deg, rgba(24, 23, 29, .76), rgba(49, 40, 39, .68));
+  backdrop-filter: blur(3px);
+  color: #f8f5ef;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .35s ease;
+}
+.journey-map-loading[data-visible="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+.journey-map-loading__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 32px;
+  border: 1px solid rgba(239, 225, 211, .17);
+  border-radius: 18px;
+  background: rgba(25, 24, 27, .38);
+  box-shadow: 0 18px 50px rgba(10, 9, 12, .12);
+  text-align: center;
+}
+.journey-map-loading__icon {
+  width: 112px;
+  height: 72px;
+  margin-bottom: 8px;
+  color: #e8cba9;
+}
+.journey-map-loading__route {
+  animation: journey-map-route 2.2s linear infinite;
+}
+.journey-map-loading__destination {
+  transform-origin: 96px 15px;
+  animation: journey-map-destination 2.2s ease-in-out infinite;
+}
+.journey-map-loading__title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .08em;
+}
+.journey-map-loading__detail {
+  margin-top: 6px;
+  color: rgba(248, 245, 239, .68);
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+.journey-map-error {
+  position: absolute;
+  z-index: 1001;
+  bottom: 22px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 9px;
+  background: rgba(30, 28, 27, .82);
+  color: #f8f5ef;
+  font-size: 11px;
+  backdrop-filter: blur(10px);
+}
+.journey-map-error button {
+  color: #e8cba9;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.journey-map-error button:focus-visible {
+  outline: 2px solid #e8cba9;
+  outline-offset: 3px;
+}
+@keyframes journey-map-route {
+  to { stroke-dashoffset: -44; }
+}
+@keyframes journey-map-destination {
+  50% { transform: scale(1.4); opacity: .65; }
+}
 @media (prefers-reduced-motion: reduce) {
   .journey-popup-card { transition: none; }
   .journey-popup-card:hover,
   .journey-popup-card:focus-within { transform: none; }
+  .journey-map-loading { transition: none; }
+  .journey-map-loading__route,
+  .journey-map-loading__destination { animation: none; }
 }
 
 /* ── Dark mode ── */
