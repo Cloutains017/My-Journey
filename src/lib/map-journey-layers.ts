@@ -21,7 +21,7 @@ function popupContent(name: string, trips: Trip[], education: Education[]): stri
         <a class="journey-popup-card__action" href="/#year-${escapeHtml(trip.date.slice(0, 4))}" title="在时间轴上定位">定位 <span aria-hidden="true">↗</span></a>
       </div>` })),
     ...education.map(item => ({ date: item.date, html: `
-      <a class="journey-popup-card" style="--journey-accent:${EDUCATION_COLOR}" href="/#education-${escapeHtml(encodeURIComponent(item.id))}" title="查看求学卡片">
+      <a class="journey-popup-card" style="--journey-accent:${EDUCATION_COLOR}" href="/#education-${escapeHtml(encodeURIComponent(item.id))}" title="查看求学足迹">
         <span class="journey-popup-card__main">
           <span class="journey-popup-card__title">${escapeHtml(item.degree)} · ${escapeHtml(item.school)}</span>
           <span class="journey-popup-card__date">${escapeHtml(item.date)} 开始</span>

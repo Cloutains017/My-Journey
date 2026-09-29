@@ -132,7 +132,7 @@ export default function HeroMap({ trips, education }: { trips: Trip[]; education
           ))}
           <div className="mt-1 flex items-center gap-2.5 border-t border-white/15 pt-2">
             <span className="h-2.5 w-2.5 rounded-full ring-1 ring-white/20" style={{ backgroundColor: EDUCATION_COLOR }} />
-            <span className="text-xs text-white/80 font-sans">求学经历</span>
+            <span className="text-xs text-white/80 font-sans">求学足迹</span>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { stripCitySuffix } from "./city-data.ts";
 
-export const EDUCATION_COLOR = "#b76e79";
+export const EDUCATION_COLOR = "#8A5AB4";
 export const RATING_COLORS: Record<number, string> = {
   1: "#6b7280", 2: "#94a3b8", 3: "#66bb6a", 4: "#ffa726", 5: "#ff6b6b",
 };

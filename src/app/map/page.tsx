@@ -160,7 +160,7 @@ export default function MapPage() {
             ))}
             <div className="mt-1 flex items-center gap-2.5 border-t border-white/15 pt-2">
               <span className="h-2.5 w-2.5 rounded-full ring-1 ring-white/20" style={{ backgroundColor: EDUCATION_COLOR }} />
-              <span className="text-xs text-white/80 font-sans">求学经历</span>
+              <span className="text-xs text-white/80 font-sans">求学足迹</span>
             </div>
           </div>
         </div>
@@ -204,8 +204,8 @@ export default function MapPage() {
         ))}
         {education.map((item) => (
           <Link key={item.id} href={`/#education-${encodeURIComponent(item.id)}`}
-            className="flex min-w-[180px] flex-shrink-0 items-center gap-3 rounded-xl border border-[#b76e79]/30 bg-[#b76e79]/10 p-3 hover:border-[#b76e79]">
-            <span className="h-3 w-3 rounded-full bg-[#b76e79]" />
+            className="flex min-w-[180px] flex-shrink-0 items-center gap-3 rounded-xl border border-[#8A5AB4]/30 bg-[#8A5AB4]/10 p-3 hover:border-[#8A5AB4]">
+            <span className="h-3 w-3 rounded-full bg-[#8A5AB4]" />
             <span><span className="block text-sm font-semibold text-ink">{item.degree} · {item.school}</span><span className="text-xs text-muted">{item.date} 开始</span></span>
           </Link>
         ))}

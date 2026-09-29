@@ -332,7 +332,7 @@ export default function AdminClient() {
           <button onClick={() => { setSecurityMode(false); setEducationMode(false); openEditor(null); setMessage(""); setCommentsMode(false); fetchTrips(); }} className={`text-left transition-colors ${!commentsMode && !securityMode && !educationMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             旅程管理
           </button>
-          <button onClick={() => { setEducationMode(true); setSecurityMode(false); setCommentsMode(false); openEditor(null); setError(""); setMessage(""); }} className={`text-left transition-colors ${educationMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>求学经历</button>
+          <button onClick={() => { setEducationMode(true); setSecurityMode(false); setCommentsMode(false); openEditor(null); setError(""); setMessage(""); }} className={`text-left transition-colors ${educationMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>求学足迹</button>
           <button onClick={() => { setEducationMode(false); setSecurityMode(false); openEditor(null); setCommentsMode(true); setMessage(""); fetchComments(); }} className={`text-left transition-colors ${commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             评论管理
           </button>
