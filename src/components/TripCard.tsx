@@ -14,11 +14,11 @@ const PinIcon = () => (
 export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount: number }) {
 
   return (
-    <Link href={`/trip/${trip.slug}`} className="group block relative rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
-      <article className="flex flex-col sm:flex-row gap-0 sm:gap-6 py-5 border-b border-hairline-soft group-hover:border-primary/40 transition-colors duration-300">
-        <div className="relative w-full aspect-[16/10] sm:aspect-auto sm:w-[180px] sm:h-[140px] rounded-lg overflow-hidden flex-shrink-0 bg-surface-cream-strong">
+    <Link href={`/trip/${trip.slug}`} className="trip-card group block relative rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+      <article className="flex flex-col sm:flex-row gap-0 sm:gap-6 py-4 sm:py-5 border-b border-hairline-soft group-hover:border-primary/40 transition-colors duration-300">
+        <div className="trip-card-media relative w-full aspect-[16/9] sm:aspect-auto sm:w-[180px] sm:h-[140px] rounded-xl sm:rounded-lg overflow-hidden flex-shrink-0 bg-surface-cream-strong">
           {trip.cover_image ? (
-            <TravelImage src={trip.cover_image} alt={trip.title} fill sizes="(max-width: 639px) calc(100vw - 48px), 180px" className="object-cover motion-safe:group-hover:scale-105 transition-transform duration-500 ease-out" />
+            <TravelImage src={trip.cover_image} alt={trip.title} fill sizes="(max-width: 639px) calc(100vw - 40px), 180px" loading="lazy" className="object-cover motion-safe:group-hover:scale-[1.03] transition-[opacity,transform] duration-500 ease-out" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-surface-cream-strong text-2xl">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2L2 22h20L12 2z" opacity="0.3" /></svg>
@@ -26,28 +26,28 @@ export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount:
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
         </div>
-        <div className="flex flex-col justify-between flex-1 min-w-0 pt-3 sm:pt-0">
+        <div className="flex flex-col justify-between flex-1 min-w-0 pt-4 sm:pt-0">
           <div>
-            <div className="flex items-center gap-3 mb-1.5">
-              <span className="text-xs text-muted font-sans">{formatDateRange(trip.date, trip.end_date)}</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-2">
+              <span className="text-[11px] sm:text-xs text-muted font-sans tabular-nums tracking-wide">{formatDateRange(trip.date, trip.end_date)}</span>
               <RatingBadge rating={trip.rating} />
             </div>
-            <h3 className="text-xl font-normal font-display text-ink mb-2 break-words group-hover:text-primary transition-colors">
+            <h3 className="text-[22px] sm:text-xl leading-snug font-normal font-display text-ink mb-2 break-words group-hover:text-primary transition-colors">
               {trip.title}
             </h3>
             {trip.location && (
-              <p className="text-sm font-normal text-muted mb-2 flex items-baseline gap-1.5 font-sans leading-relaxed">
-                <PinIcon /> <span>{trip.location}</span>
+              <p className="text-xs sm:text-sm font-normal text-muted mb-2.5 flex items-start gap-1.5 font-sans leading-relaxed">
+                <PinIcon /> <span className="line-clamp-2">{trip.location}</span>
               </p>
             )}
             <p className="text-sm text-body leading-relaxed line-clamp-2 font-sans">
               {trip.content?.replace(/[#*`>]/g, "").slice(0, 120) || "暂无文字记录"}
             </p>
           </div>
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-4 mt-4 sm:mt-3">
             <p className="text-xs text-muted-soft font-sans">{photoCount} 张照片</p>
-            <span className="text-xs text-primary ml-auto font-medium font-sans">
-              查看详情 →
+            <span className="inline-flex items-center gap-2 text-xs text-primary ml-auto font-medium font-sans">
+              阅读游记 <span aria-hidden="true" className="motion-safe:group-hover:translate-x-1 transition-transform">→</span>
             </span>
           </div>
         </div>

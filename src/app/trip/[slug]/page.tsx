@@ -69,7 +69,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
     <div>
       <ReadingProgress />
 
-      <header data-trip-hero className="relative -mt-16 isolate min-h-[100svh] overflow-hidden bg-[#172234] text-white">
+      <header id="trip-top" tabIndex={-1} data-trip-hero className="relative -mt-16 isolate min-h-[100svh] overflow-hidden bg-[#172234] text-white">
         {t.cover_image && (
           <TravelImage src={t.cover_image} alt="" fill sizes="100vw" preload variant="hero" className="-z-10 object-cover object-center" />
         )}
@@ -91,9 +91,10 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         </a>
       </header>
 
-      <article id="trip-content" className="max-w-3xl mx-auto scroll-mt-24 px-8 py-10">
+      <article id="trip-content" className="max-w-3xl mx-auto scroll-mt-24 px-5 py-8 sm:px-8 sm:py-12">
+        <div id="trip-reading">
         {/* Back button */}
-        <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors mb-8 font-sans">
+        <Link href="/" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted hover:text-ink transition-colors mb-6 sm:mb-8 font-sans">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
@@ -101,7 +102,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         </Link>
 
         {t.content && (
-          <div className="space-y-4 mb-12">
+          <div className="trip-prose space-y-5 mb-10 sm:mb-12">
             {renderContent(t.content)}
           </div>
         )}
@@ -109,6 +110,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         {groupTripPhotos(t.photos || [], t.photo_groups).map(group => (
           <PhotoGallery key={group.id} title={group.title} photos={group.photos} />
         ))}
+        </div>
 
         <AgreementVoteComponent tripId={t.id} />
         <DesireVoteComponent tripId={t.id} />

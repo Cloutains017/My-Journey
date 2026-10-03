@@ -103,6 +103,7 @@ h2 {
 
 .trip-hero-title {
   color: #f4d49d;
+  font-size: clamp(2.25rem, 7vw, 6rem);
 }
 
 .trip-hero-rating > span {
@@ -472,6 +473,31 @@ a {
 .trip-read-cue { position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-width: 88px; min-height: 48px; color: rgb(255 255 255 / .8); font-size: 11px; letter-spacing: .18em; transition: color 180ms ease; }
 .trip-read-cue:hover { color: #fff; }
 .trip-read-cue:focus-visible { outline: 2px solid #f4d49d; outline-offset: 4px; border-radius: 4px; }
+.reading-progress { position: fixed; top: 64px; left: 0; right: 0; height: 2px; background: var(--color-primary); z-index: 40; transform-origin: left; pointer-events: none; }
+.back-to-top { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 48px; height: 56px; border: 1px solid var(--color-hairline); border-radius: 16px; background: var(--color-canvas); color: var(--color-muted); box-shadow: 0 4px 24px rgb(0 0 0 / .08); cursor: pointer; font-size: 10px; }
+.back-to-top:hover { color: var(--color-primary); border-color: var(--color-primary); }
+.back-to-top:focus-visible, .photo-gallery-tile:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
+.trip-prose > p { line-height: 1.9; overflow-wrap: anywhere; }
+.photo-gallery-grid { column-gap: 10px; }
+.photo-gallery-tile { margin-bottom: 10px; }
+.photo-gallery-tile .travel-image[data-image-state="loading"], .trip-card-media .travel-image[data-image-state="loading"] { opacity: 0; }
+@media (min-width: 640px) {
+  .photo-gallery-grid { column-gap: 12px; }
+  .photo-gallery-tile { margin-bottom: 12px; }
+  .back-to-top { right: 28px; bottom: 28px; }
+}
+@media (hover: none) {
+  .photo-gallery-caption { opacity: 1; }
+}
+@media (max-width: 639px) {
+  .vote-form input { min-height: 48px; font-size: 16px; }
+  .vote-form button { min-height: 44px; }
+  .trip-prose .prose-editorial { padding-left: 1rem; font-size: 1.125rem; }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .trip-card-media { transition: transform 250ms ease, box-shadow 250ms ease; }
+  .trip-card:hover .trip-card-media { transform: translateY(-2px); box-shadow: 0 8px 24px rgb(0 0 0 / .08); }
+}
 .vote-success { display: flex; align-items: center; gap: 12px; padding: 24px 0; border-top: 1px solid var(--color-hairline); color: var(--color-accent-teal); font-size: 14px; font-weight: 500; }
 .vote-success-check { flex-shrink: 0; }
 .vote-form button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
@@ -521,5 +547,5 @@ a {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .home-journal [data-animate] { opacity: 1; animation: none; }
-  .year-nav-indicator, .year-nav-link, .lightbox-original, .lightbox-preview, .lightbox-control, .vote-form button, .trip-read-cue { transition: none; }
+  .year-nav-indicator, .year-nav-link, .lightbox-original, .lightbox-preview, .lightbox-control, .vote-form button, .trip-read-cue, .trip-card *, .photo-gallery-tile * { transition: none; }
 }

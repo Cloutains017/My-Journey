@@ -66,7 +66,7 @@ export default async function HomePage() {
       </div>
 
       {/* Info section — below map */}
-      <div className="mx-auto max-w-5xl px-6 sm:px-8">
+      <div className="mx-auto max-w-5xl px-5 sm:px-8">
         <div className="border-b border-hairline py-9 sm:py-12 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-7 sm:gap-4">
           <div>
             <p className="text-[11px] uppercase tracking-[4px] text-muted-soft mb-2 font-medium font-sans">
@@ -98,7 +98,7 @@ export default async function HomePage() {
       </div>
 
       {/* Timeline section */}
-      <section className="home-timeline mx-auto max-w-5xl px-6 sm:px-8 pb-24" aria-label="旅程时间线">
+      <section className="home-timeline mx-auto max-w-5xl px-5 sm:px-8 pb-20 sm:pb-24" aria-label="旅程时间线">
         <YearNav years={sortedYears} />
         <div className="min-w-0">
         <p className="pt-8 pb-8 text-sm sm:text-base text-muted leading-relaxed font-sans lg:pt-0">
@@ -120,7 +120,7 @@ export default async function HomePage() {
                     <span className="font-display text-xl font-normal text-primary/30 select-none leading-none mt-1">年</span>
                   </div>
 
-                  <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-3 sm:gap-6">
                     {yearItems.map((item, index) =>
                       item.kind === "trip" ? (
                         <div key={item.data.id} data-animate style={{ animationDelay: `${Math.min(index * 0.08, 0.24)}s` }}>
