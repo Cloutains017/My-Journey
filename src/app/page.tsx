@@ -123,11 +123,11 @@ export default async function HomePage() {
                   <div className="flex flex-col gap-6">
                     {yearItems.map((item, index) =>
                       item.kind === "trip" ? (
-                        <div key={item.data.id} data-animate style={{ animationDelay: `${index * 0.08}s` }}>
+                        <div key={item.data.id} data-animate style={{ animationDelay: `${Math.min(index * 0.08, 0.24)}s` }}>
                           <TripCard trip={item.data} photoCount={item.data.photo_count} />
                         </div>
                       ) : (
-                        <div key={item.data.id} data-animate style={{ animationDelay: `${index * 0.08}s` }}>
+                        <div key={item.data.id} data-animate style={{ animationDelay: `${Math.min(index * 0.08, 0.24)}s` }}>
                           <EducationCard education={item.data} />
                         </div>
                       ),

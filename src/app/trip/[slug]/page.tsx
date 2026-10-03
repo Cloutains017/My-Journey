@@ -75,19 +75,23 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         )}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(12,20,31,0.56)_0%,rgba(12,20,31,0.28)_28%,rgba(12,20,31,0.56)_72%,rgba(12,20,31,0.7)_100%)]" aria-hidden="true" />
         <div className="flex min-h-[100svh] flex-col items-center justify-center px-6 pb-16 pt-24 text-center">
-          {t.location && <p className="mb-6 text-xs font-medium tracking-[0.28em] text-white/85 sm:text-sm">{t.location}</p>}
-          <h1 className="trip-hero-title max-w-5xl break-words font-display text-[clamp(3rem,7vw,6rem)] leading-[1.12] font-normal tracking-[0.04em] text-balance drop-shadow-lg">
+          {t.location && <p className="trip-hero-reveal mb-6 text-xs font-medium tracking-[0.28em] text-white/85 sm:text-sm">{t.location}</p>}
+          <h1 className="trip-hero-reveal trip-hero-title max-w-5xl break-words font-display text-[clamp(3rem,7vw,6rem)] leading-[1.12] font-normal tracking-[0.04em] text-balance drop-shadow-lg" style={{ animationDelay: "80ms" }}>
             {t.title}
           </h1>
-          <p className="mt-7 text-sm font-medium tracking-[0.2em] text-white/90">
+          <p className="trip-hero-reveal mt-7 text-sm font-medium tracking-[0.2em] text-white/90" style={{ animationDelay: "160ms" }}>
             <time dateTime={t.date}>{t.date}</time>
             {t.end_date && t.end_date !== t.date && <> — <time dateTime={t.end_date}>{t.end_date}</time></>}
           </p>
-          <div className="trip-hero-rating mt-8"><RatingBadge rating={t.rating} size="lg" /></div>
+          <div className="trip-hero-reveal trip-hero-rating mt-8" style={{ animationDelay: "240ms" }}><RatingBadge rating={t.rating} size="lg" /></div>
         </div>
+        <a href="#trip-content" className="trip-read-cue" aria-label="向下阅读游记">
+          <span>向下阅读</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        </a>
       </header>
 
-      <article className="max-w-3xl mx-auto px-8 py-10">
+      <article id="trip-content" className="max-w-3xl mx-auto scroll-mt-24 px-8 py-10">
         {/* Back button */}
         <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors mb-8 font-sans">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
