@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import JourneyLink from "@/components/JourneyLink";
 import TravelImage from "@/components/TravelImage";
 import type L from "leaflet";
 import { supabase } from "@/lib/supabase";
 import type { Trip, Education } from "@/lib/types";
 import { DEFAULT_EDUCATION } from "@/lib/education";
 import { addJourneyLayers } from "@/lib/map-journey-layers";
+import { withJourneyFilters } from "@/lib/journey-browsing";
 import { EDUCATION_COLOR, RATING_COLORS } from "@/lib/education-map";
 import { formatDateRange, RATING_LABELS } from "@/lib/types";
 import type { FeatureCollection } from "@/lib/city-data";
@@ -38,13 +41,21 @@ async function loadBoundaries(): Promise<FeatureCollection | null> {
   return null;
 }
 
-export default function MapPage() {
+function JourneyMap() {
+  const searchParams = useSearchParams();
+  const selected = searchParams.get("trip") || searchParams.get("education");
+  const filterQuery = withJourneyFilters("", searchParams);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layersRef = useRef<L.Layer[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [tripsLoaded, setTripsLoaded] = useState(false);
   const [education, setEducation] = useState<Education[]>(DEFAULT_EDUCATION);
   const [mapReady, setMapReady] = useState(false);
+  const [layersReady, setLayersReady] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [legendExpanded, setLegendExpanded] = useState(false);
+  const selectedTrip = trips.find(trip => trip.id === searchParams.get("trip"));
 
   // Fetch trips
   useEffect(() => {
@@ -55,7 +66,8 @@ export default function MapPage() {
       .order("date", { ascending: false })
       .then(({ data, error }) => {
         if (cancelled) return;
-        if (error) { console.warn("Failed to fetch trips:", error.message); return; }
+        setTripsLoaded(true);
+        if (error) { setLoadError(true); return; }
         if (data) setTrips(data as Trip[]);
       });
     return () => { cancelled = true; };
@@ -72,9 +84,10 @@ export default function MapPage() {
   // Init map
   useEffect(() => {
     if (!mapRef.current) return;
+    let cancelled = false;
 
     getLeaflet().then((L) => {
-      if (mapInstanceRef.current) return;
+      if (cancelled || !mapRef.current || mapInstanceRef.current) return;
 
       const map = L.map(mapRef.current!, {
         center: [35, 115],
@@ -103,9 +116,10 @@ export default function MapPage() {
 
       mapInstanceRef.current = map;
       setMapReady(true);
-    });
+    }).catch(() => { if (!cancelled) setLoadError(true); });
 
     return () => {
+      cancelled = true;
       setMapReady(false);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
@@ -129,24 +143,30 @@ export default function MapPage() {
       const geoJSON = await loadBoundaries();
       if (cancelled || mapInstanceRef.current !== map) return;
 
-      const journeyLayers = addJourneyLayers(L, map, trips, education, geoJSON);
+      const journeyLayers = addJourneyLayers(L, map, trips, education, geoJSON, new URLSearchParams(filterQuery.slice(1)));
       layersRef.current.push(...journeyLayers.layers);
-      const selected = new URLSearchParams(window.location.search).get("education");
       if (selected) journeyLayers.focus.get(selected)?.();
+      setLayersReady(true);
 
-    });
+    }).catch(() => { if (!cancelled) setLoadError(true); });
     return () => { cancelled = true; };
-  }, [trips, education, mapReady]);
+  }, [trips, education, mapReady, selected, filterQuery]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)]">
+    <div className="flex flex-col h-[calc(100dvh-64px)]">
       <div className="relative flex-1 w-full">
-        <div ref={mapRef} className="w-full h-full" role="img" aria-label="旅行足迹全屏地图" />
+        <div ref={mapRef} className="w-full h-full" role="img" aria-label="旅行足迹全屏地图" aria-busy={!layersReady || !tripsLoaded} />
+        {(loadError || !layersReady || !tripsLoaded || selectedTrip) && <div className="absolute left-4 top-4 z-[1000] max-w-[calc(100%-160px)] rounded-xl border border-hairline bg-canvas/95 px-3 py-2 text-xs text-ink shadow-sm">
+          {loadError ? <p role="alert">旅程地图暂时无法加载 <button type="button" className="journey-clear" onClick={() => window.location.reload()}>重试</button></p>
+            : !layersReady || !tripsLoaded ? <p role="status">正在加载旅程地图…</p>
+              : selectedTrip && <><p className="mb-1 text-muted">当前定位 · {selectedTrip.city_name || selectedTrip.location}</p><JourneyLink className="inline-flex min-h-11 items-center leading-relaxed" href={`/trip/${encodeURIComponent(selectedTrip.slug)}`}>返回游记：{selectedTrip.title}</JourneyLink></>}
+        </div>}
 
         {/* Rating legend */}
         <div className="absolute top-4 right-4 z-[1000] rounded-xl bg-black/55 backdrop-blur-xl border border-white/[0.12] px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-          <div className="text-[10px] uppercase tracking-[2px] text-white/35 mb-2.5 font-sans font-medium">评级</div>
-          <div className="flex flex-col gap-1.5">
+          <div className="hidden text-[10px] uppercase tracking-[2px] text-white/35 mb-2.5 font-sans font-medium sm:block">评级</div>
+          <button type="button" aria-expanded={legendExpanded} aria-controls="map-rating-legend" onClick={() => setLegendExpanded(value => !value)} className="flex min-h-11 items-center gap-2 text-xs text-white/85 sm:hidden">评级 <span aria-hidden="true">{legendExpanded ? "−" : "+"}</span></button>
+          <div id="map-rating-legend" className={`${legendExpanded ? "flex" : "hidden sm:flex"} flex-col gap-1.5`}>
             {[5, 4, 3, 2, 1].map((v) => (
               <div key={v} className="flex items-center gap-2.5">
                 <span
@@ -169,7 +189,7 @@ export default function MapPage() {
         <div className="absolute right-4 bottom-6 z-[1000] flex flex-col rounded-xl overflow-hidden bg-black/55 backdrop-blur-xl border border-white/[0.12] shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
           <button
             onClick={() => mapInstanceRef.current?.zoomIn()}
-            className="w-9 h-9 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors text-lg leading-none select-none"
+            className="w-11 h-11 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors text-lg leading-none select-none"
             aria-label="放大"
           >
             +
@@ -177,7 +197,7 @@ export default function MapPage() {
           <div className="h-px bg-white/[0.12]" />
           <button
             onClick={() => mapInstanceRef.current?.zoomOut()}
-            className="w-9 h-9 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors text-lg leading-none select-none"
+            className="w-11 h-11 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors text-lg leading-none select-none"
             aria-label="缩小"
           >
             −
@@ -186,7 +206,7 @@ export default function MapPage() {
       </div>
       <div className="bg-canvas border-t border-hairline px-4 sm:px-8 py-4 flex gap-3 sm:gap-4 overflow-x-auto" style={{ WebkitOverflowScrolling: "touch" }}>
         {trips.map((trip) => (
-          <Link
+          <JourneyLink
             key={trip.id}
             href={`/trip/${trip.slug}`}
             className="flex items-center gap-3 p-3 rounded-xl bg-surface-card border border-hairline-soft hover:border-primary/20 hover:shadow-sm flex-shrink-0 min-w-[180px] sm:min-w-[200px] transition-all"
@@ -200,7 +220,7 @@ export default function MapPage() {
               <p className="text-sm font-semibold text-ink truncate">{trip.title}</p>
               <p className="text-xs text-muted">{formatDateRange(trip.date, trip.end_date)}</p>
             </div>
-          </Link>
+          </JourneyLink>
         ))}
         {education.map((item) => (
           <Link key={item.id} href={`/#education-${encodeURIComponent(item.id)}`}
@@ -212,4 +232,8 @@ export default function MapPage() {
       </div>
     </div>
   );
+}
+
+export default function MapPage() {
+  return <Suspense fallback={<div role="status" className="flex h-[calc(100dvh-64px)] items-center justify-center bg-canvas text-muted">正在加载旅程地图…</div>}><JourneyMap /></Suspense>;
 }

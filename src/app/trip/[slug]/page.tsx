@@ -1,4 +1,4 @@
-import Link from "next/link";
+import JourneyLink from "@/components/JourneyLink";
 import TravelImage from "@/components/TravelImage";
 import { supabase } from "@/lib/supabase";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
@@ -9,6 +9,8 @@ import DesireVoteComponent from "@/components/DesireVote";
 import VisitorComments from "@/components/VisitorComments";
 import RatingBadge from "@/components/RatingBadge";
 import ReadingProgress from "@/components/ReadingProgress";
+import TripNavigation, { type NavigationTrip } from "@/components/TripNavigation";
+import { adjacentTrips } from "@/lib/journey-browsing";
 import { notFound } from "next/navigation";
 
 export const revalidate = 3600;
@@ -55,15 +57,15 @@ function renderContent(content: string) {
 export default async function TripPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const { data: trip } = await supabase
-    .from("trips")
-    .select("*, photos(*), agreement_votes(*), desire_votes(*)")
-    .eq("slug", slug)
-    .single();
+  const [{ data: trip }, { data: journeyIndex }] = await Promise.all([
+    supabase.from("trips").select("*, photos(*), agreement_votes(*), desire_votes(*)").eq("slug", slug).single(),
+    supabase.from("trips").select("id,slug,title,date,location").order("date", { ascending: true }),
+  ]);
 
   if (!trip) notFound();
 
   const t = trip as Trip & { photos: Photo[]; agreement_votes: AgreementVote[]; desire_votes: DesireVote[] };
+  const neighbours = adjacentTrips((journeyIndex ?? []) as NavigationTrip[], t.id);
 
   return (
     <div>
@@ -94,12 +96,18 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
       <article id="trip-content" className="max-w-3xl mx-auto scroll-mt-24 px-5 py-8 sm:px-8 sm:py-12">
         <div id="trip-reading">
         {/* Back button */}
-        <Link href="/" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted hover:text-ink transition-colors mb-6 sm:mb-8 font-sans">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-2 sm:mb-8">
+        <JourneyLink href="/#journey-explorer" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted hover:text-ink transition-colors font-sans">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
           返回旅程
-        </Link>
+        </JourneyLink>
+        <JourneyLink href={`/map?trip=${encodeURIComponent(t.id)}`} aria-label={`在地图上查看${t.title}`} className="trip-map-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>
+          地图定位
+        </JourneyLink>
+        </div>
 
         {t.content && (
           <div className="trip-prose space-y-5 mb-10 sm:mb-12">
@@ -112,6 +120,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         ))}
         </div>
 
+        <TripNavigation {...neighbours} />
         <AgreementVoteComponent tripId={t.id} />
         <DesireVoteComponent tripId={t.id} />
         <VisitorComments agreementVotes={t.agreement_votes || []} desireVotes={t.desire_votes || []} />

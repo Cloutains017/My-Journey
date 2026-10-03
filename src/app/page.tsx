@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import HeroMap from "@/components/HeroMap";
 import TripCard from "@/components/TripCard";
 import EducationCard from "@/components/EducationCard";
-import YearNav from "@/components/YearNav";
+import JourneyExplorer, { type JourneyItem } from "@/components/JourneyExplorer";
 import { groupTripsByCity } from "@/lib/city-data";
 import type { Trip, Education } from "@/lib/types";
 import { DEFAULT_EDUCATION } from "@/lib/education";
@@ -25,10 +25,6 @@ const getEducation = unstable_cache(async (): Promise<Education[]> => {
   return data as Education[];
 }, ["home-education"], { revalidate: 3600 });
 
-type TimelineItem =
-  | { kind: "trip"; data: Trip & { photo_count: number } }
-  | { kind: "education"; data: Education };
-
 export default async function HomePage() {
   await connection();
   const [trips, education] = await Promise.all([getTrips(), getEducation()]);
@@ -37,22 +33,16 @@ export default async function HomePage() {
     return { ...trip, photo_count: photos[0]?.count ?? 0 };
   });
 
-  // Merge trips + education into unified timeline
-  const items: TimelineItem[] = [
-    ...tripList.map((t) => ({ kind: "trip" as const, data: t })),
-    ...education.map((record) => ({ kind: "education" as const, data: record })),
+  // Keep card rendering on the server; send only searchable metadata to the explorer.
+  const items: JourneyItem[] = [
+    ...tripList.map(trip => ({ kind: "trip" as const, id: trip.id, title: trip.title, date: trip.date,
+      city_name: trip.city_name, location: trip.location, rating: trip.rating,
+      content: <TripCard trip={trip} photoCount={trip.photo_count} /> })),
+    ...education.map(record => ({ kind: "education" as const, id: record.id, title: `${record.degree} · ${record.school}`, date: record.date,
+      city_name: record.city_name, location: record.location, rating: null,
+      content: <EducationCard education={record} /> })),
   ];
-  items.sort((a, b) => b.data.date.localeCompare(a.data.date));
-
-  // Group by year
-  const yearGroups = new Map<number, TimelineItem[]>();
-  for (const item of items) {
-    const y = Number(item.data.date.slice(0, 4));
-    const list = yearGroups.get(y);
-    if (list) list.push(item);
-    else yearGroups.set(y, [item]);
-  }
-  const sortedYears = Array.from(yearGroups.keys()).sort((a, b) => b - a);
+  items.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 
   const cityCount = [...groupTripsByCity(tripList).keys()].filter(Boolean).length;
   const latestDate = tripList[0]?.date || "—";
@@ -97,57 +87,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Timeline section */}
-      <section className="home-timeline mx-auto max-w-5xl px-5 sm:px-8 pb-20 sm:pb-24" aria-label="旅程时间线">
-        <YearNav years={sortedYears} />
-        <div className="min-w-0">
-        <p className="pt-8 pb-8 text-sm sm:text-base text-muted leading-relaxed font-sans lg:pt-0">
-          走过的已成风景，未至的才是远方
-        </p>
-        <div className="relative">
-
-          <div className="flex flex-col gap-10">
-            {sortedYears.map((year, yi) => {
-              const yearItems = yearGroups.get(year)!;
-
-              return (
-                <div key={year} id={`year-${year}`} className="scroll-mt-36 lg:scroll-mt-24">
-                  {/* Year divider */}
-                  <div className="flex items-center gap-4 mb-6 border-b border-hairline pb-5">
-                    <span className="font-display text-4xl font-normal text-primary tracking-[-1px] select-none leading-none tabular-nums">
-                      {year}
-                    </span>
-                    <span className="font-display text-xl font-normal text-primary/30 select-none leading-none mt-1">年</span>
-                  </div>
-
-                  <div className="flex flex-col gap-3 sm:gap-6">
-                    {yearItems.map((item, index) =>
-                      item.kind === "trip" ? (
-                        <div key={item.data.id} data-animate style={{ animationDelay: `${Math.min(index * 0.08, 0.24)}s` }}>
-                          <TripCard trip={item.data} photoCount={item.data.photo_count} />
-                        </div>
-                      ) : (
-                        <div key={item.data.id} data-animate style={{ animationDelay: `${Math.min(index * 0.08, 0.24)}s` }}>
-                          <EducationCard education={item.data} />
-                        </div>
-                      ),
-                    )}
-                  </div>
-
-                  {yi < sortedYears.length - 1 && <div className="h-4" />}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {items.length === 0 && (
-          <p className="text-center text-muted py-20 text-base font-sans">
-            还没有旅程记录，开始你的第一段旅程吧。
-          </p>
-        )}
-        </div>
-      </section>
+      <JourneyExplorer items={items} />
     </div>
   );
 }

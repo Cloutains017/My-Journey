@@ -1,4 +1,4 @@
-import Link from "next/link";
+import JourneyLink from "@/components/JourneyLink";
 import type { Trip } from "@/lib/types";
 import { formatDateRange } from "@/lib/types";
 import TravelImage from "@/components/TravelImage";
@@ -14,7 +14,7 @@ const PinIcon = () => (
 export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount: number }) {
 
   return (
-    <Link href={`/trip/${trip.slug}`} className="trip-card group block relative rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+    <JourneyLink href={`/trip/${trip.slug}`} className="trip-card group block relative rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
       <article className="flex flex-col sm:flex-row gap-0 sm:gap-6 py-4 sm:py-5 border-b border-hairline-soft group-hover:border-primary/40 transition-colors duration-300">
         <div className="trip-card-media relative w-full aspect-[16/9] sm:aspect-auto sm:w-[180px] sm:h-[140px] rounded-xl sm:rounded-lg overflow-hidden flex-shrink-0 bg-surface-cream-strong">
           {trip.cover_image ? (
@@ -52,6 +52,6 @@ export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount:
           </div>
         </div>
       </article>
-    </Link>
+    </JourneyLink>
   );
 }
