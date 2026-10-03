@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Cached production CSS stayed stale after a deployment; compile fresh assets.
+    turbopackFileSystemCacheForBuild: false,
+  },
   images: {
     // Serve R2's pre-generated variants and originals without invoking
     // Vercel image transformations for each displayed size.
