@@ -83,5 +83,5 @@ test("overseas focus uses the trip coordinates and keeps popup titles escaped", 
 
 test("map popup trip links keep the search context and escape query separators", async () => {
   const view = await draw([trip], [], null, new URLSearchParams("q=山水&year=2026&rating=5"));
-  assert.ok(view.layers[1].popup.includes('href="/trip/mountains?q=%E5%B1%B1%E6%B0%B4&amp;year=2026&amp;rating=5"'));
+  assert.ok(view.layers[1].popup.includes('href="/trip/mountains?q=%E5%B1%B1%E6%B0%B4&amp;rating=5"'));
 });

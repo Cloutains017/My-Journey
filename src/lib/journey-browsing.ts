@@ -8,12 +8,11 @@ export interface JourneySearchRecord {
   rating: number | null;
 }
 
-export interface JourneyFilters { query: string; year: string; rating: string }
+export interface JourneyFilters { query: string; rating: string }
 
 export function readJourneyFilters(params: { get(name: string): string | null }): JourneyFilters {
-  const year = params.get("year") || "";
   const rating = params.get("rating") || "";
-  return { query: (params.get("q") || "").slice(0, 100), year: /^\d{4}$/.test(year) ? year : "", rating: /^[1-5]$/.test(rating) ? rating : "" };
+  return { query: (params.get("q") || "").slice(0, 100), rating: /^[1-5]$/.test(rating) ? rating : "" };
 }
 
 export function withJourneyFilters(href: string, params: { get(name: string): string | null }): string {
@@ -21,7 +20,8 @@ export function withJourneyFilters(href: string, params: { get(name: string): st
   const [pathAndQuery, hash] = href.split("#", 2);
   const [path, query] = pathAndQuery.split("?", 2);
   const next = new URLSearchParams(query);
-  for (const [name, value] of [["q", filters.query], ["year", filters.year], ["rating", filters.rating]]) {
+  next.delete("year");
+  for (const [name, value] of [["q", filters.query], ["rating", filters.rating]]) {
     if (value) next.set(name, value);
   }
   return `${path}${next.size ? `?${next}` : ""}${hash === undefined ? "" : `#${hash}`}`;
@@ -30,7 +30,6 @@ export function withJourneyFilters(href: string, params: { get(name: string): st
 export function filterJourneys<T extends JourneySearchRecord>(items: T[], filters: JourneyFilters): T[] {
   const words = filters.query.normalize("NFKC").trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
   return items.filter(item => {
-    if (filters.year && item.date.slice(0, 4) !== filters.year) return false;
     if (filters.rating && (item.kind !== "trip" || String(item.rating) !== filters.rating)) return false;
     const text = [item.title, item.city_name, item.location].join(" ").normalize("NFKC").toLocaleLowerCase();
     return words.every(word => text.includes(word));

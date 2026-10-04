@@ -451,7 +451,7 @@ a {
 
 /* Keep the year index within the timeline's own layout. */
 .home-timeline { display: block; }
-.journey-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; padding: 28px 0; border-bottom: 1px solid var(--color-hairline); }
+.journey-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px 12px; padding: 28px 0; border-bottom: 1px solid var(--color-hairline); }
 .journey-filter-query { grid-column: 1 / -1; }
 .journey-filters label { display: block; margin-bottom: 8px; color: var(--color-muted); font-size: 12px; }
 .journey-filters input, .journey-filters select { width: 100%; min-width: 0; min-height: 48px; padding: 10px 12px; border: 1px solid var(--color-hairline); border-radius: 10px; background: var(--color-canvas); color: var(--color-ink); font: inherit; font-size: 16px; outline: none; }
@@ -467,7 +467,7 @@ a {
 .trip-pagination-link { display: block; min-width: 0; padding: 20px; border: 1px solid var(--color-hairline); border-radius: 12px; background: var(--color-canvas); overflow-wrap: anywhere; transition: border-color 180ms ease; }
 .trip-pagination-link:hover { border-color: var(--color-primary); }
 @media (min-width: 640px) {
-  .journey-filters { grid-template-columns: minmax(0, 1fr) 150px 130px; gap: 16px; padding: 32px 0; }
+  .journey-filters { grid-template-columns: minmax(0, 1fr) 130px; gap: 16px; padding: 32px 0; }
   .journey-filter-query { grid-column: auto; }
   .journey-filters input, .journey-filters select { font-size: 14px; }
 }

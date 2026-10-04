@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import YearNav from "@/components/YearNav";
 import { RATING_LABELS } from "@/lib/types";
@@ -11,6 +11,16 @@ export interface JourneyItem extends JourneySearchRecord { content: ReactNode }
 export default function JourneyExplorer({ items }: { items: JourneyItem[] }) {
   const params = useSearchParams();
   const filters = readJourneyFilters(params);
+  const [query, setQuery] = useState(filters.query);
+  const [urlQuery, setUrlQuery] = useState(filters.query);
+  const [isComposing, setIsComposing] = useState(false);
+  const composing = useRef(false);
+  // Restore browser history without making the URL the input's live value.
+  if (urlQuery !== filters.query) {
+    setUrlQuery(filters.query);
+    const currentQuery = typeof window === "undefined" ? filters.query : readJourneyFilters(new URLSearchParams(window.location.search)).query;
+    if (!isComposing && filters.query === currentQuery) setQuery(filters.query);
+  }
   const filtered = filterJourneys(items, filters);
   const groups = new Map<number, JourneyItem[]>();
   for (const item of filtered) {
@@ -20,20 +30,23 @@ export default function JourneyExplorer({ items }: { items: JourneyItem[] }) {
     groups.set(year, group);
   }
   const years = [...groups.keys()].sort((a, b) => b - a);
-  const allYears = [...new Set(items.map(item => item.date.slice(0, 4)))].sort().reverse();
-  if (filters.year && !allYears.includes(filters.year)) allYears.push(filters.year);
   const tripCount = filtered.filter(item => item.kind === "trip").length;
   const schoolCount = filtered.length - tripCount;
-  const active = Boolean(filters.query || filters.year || filters.rating);
+  const active = Boolean(filters.query || filters.rating);
 
-  function update(name: "q" | "year" | "rating", value: string) {
+  function update(name: "q" | "rating", value: string) {
     const next = new URLSearchParams(window.location.search);
+    next.delete("year");
     if (value) next.set(name, value); else next.delete(name);
+    if (next.toString() === new URLSearchParams(window.location.search).toString()) return;
     const url = `${window.location.pathname}${next.size ? `?${next}` : ""}${window.location.hash}`;
     if (name === "q") window.history.replaceState(null, "", url);
     else window.history.pushState(null, "", url);
   }
   function reset() {
+    composing.current = false;
+    setIsComposing(false);
+    setQuery("");
     const next = new URLSearchParams(window.location.search);
     ["q", "year", "rating"].forEach(name => next.delete(name));
     window.history.pushState(null, "", `${window.location.pathname}${next.size ? `?${next}` : ""}${window.location.hash}`);
@@ -46,15 +59,19 @@ export default function JourneyExplorer({ items }: { items: JourneyItem[] }) {
           <label htmlFor="journey-query">寻找一段旅程</label>
           <div className="relative">
             <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
-            <input id="journey-query" type="search" maxLength={100} autoComplete="off" placeholder="搜索城市或游记标题" value={filters.query} onChange={event => update("q", event.target.value)} />
+            <input id="journey-query" type="search" maxLength={100} autoComplete="off" placeholder="搜索城市或游记标题" value={query}
+              onCompositionStart={() => { composing.current = true; setIsComposing(true); }}
+              onCompositionEnd={event => {
+                composing.current = false;
+                setIsComposing(false);
+                setQuery(event.currentTarget.value);
+                update("q", event.currentTarget.value);
+              }}
+              onChange={event => {
+                setQuery(event.target.value);
+                if (!composing.current && !(event.nativeEvent as InputEvent).isComposing) update("q", event.target.value);
+              }} />
           </div>
-        </div>
-        <div>
-          <label htmlFor="journey-year">年份</label>
-          <select id="journey-year" value={filters.year} onChange={event => update("year", event.target.value)}>
-            <option value="">全部年份</option>
-            {allYears.map(year => <option key={year} value={year}>{year} 年</option>)}
-          </select>
         </div>
         <div>
           <label htmlFor="journey-rating">评级</label>

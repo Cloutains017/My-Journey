@@ -16,8 +16,8 @@ async function browsing() {
   const source = await readFile("src/lib/journey-browsing.ts", "utf8").catch(() => "");
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const compiledModule = { exports: {} as {
-    filterJourneys(items: RecordItem[], filters: { query: string; year: string; rating: string }): RecordItem[];
-    readJourneyFilters(params: URLSearchParams): { query: string; year: string; rating: string };
+    filterJourneys(items: RecordItem[], filters: { query: string; rating: string }): RecordItem[];
+    readJourneyFilters(params: URLSearchParams): { query: string; rating: string };
     adjacentTrips(items: RecordItem[], id: string): { previous: RecordItem | null; next: RecordItem | null };
     withJourneyFilters(href: string, params: URLSearchParams): string;
   } };
@@ -26,24 +26,24 @@ async function browsing() {
   return compiledModule.exports;
 }
 
-test("journey search combines city/title keywords with year and rating", async () => {
+test("journey search combines city/title keywords with rating", async () => {
   const { filterJourneys } = await browsing();
-  assert.deepEqual(filterJourneys(items, { query: " 福州  山水 ", year: "2025", rating: "5" }).map(x => x.id), ["b"]);
-  assert.deepEqual(filterJourneys(items, { query: "ＳＩＮＧＡＰＯＲＥ", year: "", rating: "" }).map(x => x.id), ["a"]);
-  assert.deepEqual(filterJourneys(items, { query: "新加坡", year: "", rating: "" }).map(x => x.id), ["a", "d"]);
+  assert.deepEqual(filterJourneys(items, { query: " 福州  山水 ", rating: "5" }).map(x => x.id), ["b"]);
+  assert.deepEqual(filterJourneys(items, { query: "ＳＩＮＧＡＰＯＲＥ", rating: "" }).map(x => x.id), ["a"]);
+  assert.deepEqual(filterJourneys(items, { query: "新加坡", rating: "" }).map(x => x.id), ["a", "d"]);
 });
 
 test("rating filtering excludes school records and empty searches preserve all records", async () => {
   const { filterJourneys } = await browsing();
-  assert.deepEqual(filterJourneys(items, { query: "  ", year: "", rating: "" }), items);
-  assert.deepEqual(filterJourneys(items, { query: "", year: "2025", rating: "3" }).map(x => x.id), ["a"]);
-  assert.deepEqual(filterJourneys(items, { query: "不存在", year: "", rating: "" }), []);
+  assert.deepEqual(filterJourneys(items, { query: "  ", rating: "" }), items);
+  assert.deepEqual(filterJourneys(items, { query: "", rating: "3" }).map(x => x.id), ["a", "c"]);
+  assert.deepEqual(filterJourneys(items, { query: "不存在", rating: "" }), []);
 });
 
 test("URL filters normalize invalid values while preserving a shareable query", async () => {
   const { readJourneyFilters } = await browsing();
-  assert.deepEqual(readJourneyFilters(new URLSearchParams("q=山水&year=2025&rating=5")), { query: "山水", year: "2025", rating: "5" });
-  assert.deepEqual(readJourneyFilters(new URLSearchParams("year=abc&rating=0")), { query: "", year: "", rating: "" });
+  assert.deepEqual(readJourneyFilters(new URLSearchParams("q=山水&rating=5")), { query: "山水", rating: "5" });
+  assert.deepEqual(readJourneyFilters(new URLSearchParams("year=abc&rating=0")), { query: "", rating: "" });
 });
 
 test("adjacent trips use date and ID order, skip education, and never mutate input", async () => {
@@ -64,8 +64,8 @@ test("missing and single trips do not create self-links", async () => {
 test("journey navigation preserves valid filters, map targets and return anchors", async () => {
   const { withJourneyFilters } = await browsing();
   const params = new URLSearchParams("q=山水&year=2025&rating=5&redirect=https://example.com");
-  assert.equal(withJourneyFilters("/trip/mountains", params), "/trip/mountains?q=%E5%B1%B1%E6%B0%B4&year=2025&rating=5");
-  assert.equal(withJourneyFilters("/#journey-explorer", params), "/?q=%E5%B1%B1%E6%B0%B4&year=2025&rating=5#journey-explorer");
-  assert.equal(withJourneyFilters("/map?trip=b", params), "/map?trip=b&q=%E5%B1%B1%E6%B0%B4&year=2025&rating=5");
+  assert.equal(withJourneyFilters("/trip/mountains", params), "/trip/mountains?q=%E5%B1%B1%E6%B0%B4&rating=5");
+  assert.equal(withJourneyFilters("/#journey-explorer", params), "/?q=%E5%B1%B1%E6%B0%B4&rating=5#journey-explorer");
+  assert.equal(withJourneyFilters("/map?trip=b", params), "/map?trip=b&q=%E5%B1%B1%E6%B0%B4&rating=5");
   assert.equal(withJourneyFilters("/#journey-explorer", new URLSearchParams("year=bad&rating=0")), "/#journey-explorer");
 });
