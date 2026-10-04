@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
-@import "../../public/fonts/misans/fonts.css";
+@import "@fontsource-variable/noto-serif-sc";
 
 @theme {
   /* Warm editorial palette */
@@ -41,15 +41,15 @@
   --color-text-muted: rgba(255, 255, 255, 0.3);
 
   /* Font families */
-  --font-display: "Cormorant Garamond", "EB Garamond", "Times New Roman", "MiSans", serif;
-  --font-sans: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", "Microsoft YaHei", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-journey-sans: var(--font-sans);
-  /* MiSans's native axis: Regular 330, Medium 380, Demibold 450, Bold 630. */
-  --font-weight-normal: 330;
-  --font-weight-medium: 380;
-  --font-weight-semibold: 450;
-  --font-weight-bold: 630;
+  --font-serif: "Noto Serif SC Variable", "Songti SC", "STSong", "SimSun", serif;
+  --font-display: var(--font-serif);
+  --font-sans: var(--font-serif);
+  --font-mono: var(--font-serif);
+  --font-journey-serif: var(--font-serif);
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 }
 
 /* ── Base ── */
@@ -65,9 +65,16 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-weight: 330;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Map controls ship their own font stacks; keep all visible type consistent. */
+.leaflet-container,
+.leaflet-container .leaflet-bar a,
+.leaflet-container .leaflet-popup-close-button {
+  font-family: var(--font-serif);
 }
 
 /* Subtle grain overlay for depth — below modals */
@@ -122,24 +129,24 @@ h2 {
 .trip-hero-title {
   color: #fff;
   max-width: 13em;
-  font-family: var(--font-journey-sans);
+  font-family: var(--font-journey-serif);
   font-size: clamp(2.5rem, 5.5vw, 4.5rem);
-  font-weight: 450;
+  font-weight: 500;
   line-height: 1.35;
   letter-spacing: 0;
   text-wrap: balance;
 }
-.trip-hero-location, .trip-hero-date { font-family: var(--font-journey-sans); font-size: 13px; line-height: 1.8; font-weight: 330; }
+.trip-hero-location, .trip-hero-date { font-family: var(--font-journey-serif); font-size: 13px; line-height: 1.8; font-weight: 400; }
 .trip-hero-location { max-width: 36em; letter-spacing: 0.025em; text-wrap: balance; }
 .trip-hero-date { font-variant-numeric: tabular-nums; letter-spacing: 0.035em; }
 
 .trip-hero-rating > span {
-  font-family: var(--font-journey-sans);
+  font-family: var(--font-journey-serif);
   color: #fff;
   background: rgb(12 20 31 / 0.25);
   border-color: rgb(255 255 255 / 0.45);
   font-size: 12px;
-  font-weight: 330;
+  font-weight: 400;
   padding: 4px 12px;
 }
 
@@ -528,20 +535,20 @@ a {
 .back-to-top { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 48px; height: 56px; border: 1px solid var(--color-hairline); border-radius: 16px; background: var(--color-canvas); color: var(--color-muted); box-shadow: 0 4px 24px rgb(0 0 0 / .08); cursor: pointer; font-size: 10px; }
 .back-to-top:hover { color: var(--color-primary); border-color: var(--color-primary); }
 .back-to-top:focus-visible, .photo-gallery-tile:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
-.home-journal .font-sans, .home-journal .font-display, .home-journal h1, .trip-card { font-family: var(--font-journey-sans); }
-.home-journal h1 { font-size: clamp(28px, 4vw, 36px); line-height: 1.4; font-weight: 450; letter-spacing: 0; }
+.home-journal .font-sans, .home-journal .font-display, .home-journal h1, .trip-card { font-family: var(--font-journey-serif); }
+.home-journal h1 { font-size: clamp(28px, 4vw, 36px); line-height: 1.4; font-weight: 500; letter-spacing: 0; }
 .home-journal {
   --journal-card-title-size: 1.5rem;
   --journal-card-gap: 22px;
   --journal-card-padding: 32px;
 }
-.education-card h3 { font-family: var(--font-journey-sans); font-weight: 380; font-size: 18px; line-height: 1.5; letter-spacing: 0; }
+.education-card h3 { font-family: var(--font-journey-serif); font-weight: 400; font-size: 18px; line-height: 1.5; letter-spacing: 0; }
 .trip-card-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--journal-card-gap); padding-block: var(--journal-card-padding); border-bottom: 1px solid var(--color-hairline-soft); }
 .trip-card-media { width: 100%; aspect-ratio: 4 / 3; border-radius: 6px; }
 .trip-card-copy { display: flex; flex-direction: column; min-width: 0; }
 .trip-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 20px; font-size: 12px; line-height: 1.6; letter-spacing: 0; }
-.trip-card-meta > span:last-child { font-weight: 330; }
-.trip-card-title { margin-bottom: 12px; font-family: var(--font-journey-sans); font-size: var(--journal-card-title-size); line-height: 1.45; font-weight: 380; letter-spacing: 0; text-wrap: balance; }
+.trip-card-meta > span:last-child { font-weight: 400; }
+.trip-card-title { margin-bottom: 12px; font-family: var(--font-journey-serif); font-size: var(--journal-card-title-size); line-height: 1.45; font-weight: 400; letter-spacing: 0; text-wrap: balance; }
 .trip-card:hover .trip-card-title, .trip-card:focus-visible .trip-card-title { color: var(--color-ink); }
 .trip-card-location { margin-bottom: 14px; font-size: 13px; line-height: 1.7; }
 .trip-card-location svg { margin-top: 4px; }
@@ -552,18 +559,18 @@ a {
 .trip-card-read::before { opacity: .2; }
 .trip-card-read::after { transform: scaleX(0); transform-origin: left; }
 .trip-card:focus-visible .trip-card-read::after, .trip-card:active .trip-card-read::after { transform: scaleX(1); }
-.trip-article, .trip-article .font-sans { font-family: var(--font-journey-sans); }
-.trip-prose { max-width: 34em; margin-inline: auto; font-size: 1.0625rem; font-weight: 330; line-height: 1.9; letter-spacing: 0.025em; color: var(--color-body); overflow-wrap: anywhere; text-wrap: pretty; }
+.trip-article, .trip-article .font-sans { font-family: var(--font-journey-serif); }
+.trip-prose { max-width: 34em; margin-inline: auto; font-size: 1.0625rem; font-weight: 400; line-height: 1.9; letter-spacing: 0.025em; color: var(--color-body); overflow-wrap: anywhere; text-wrap: pretty; }
 .trip-prose > p { margin: 0; overflow-wrap: anywhere; }
-.trip-prose .prose-editorial { margin: 0; padding-left: 1.15em; font-family: var(--font-journey-sans); font-size: 1em; font-style: normal; line-height: inherit; letter-spacing: inherit; opacity: 1; }
+.trip-prose .prose-editorial { margin: 0; padding-left: 1.15em; font-family: var(--font-journey-serif); font-size: 1em; font-style: normal; line-height: inherit; letter-spacing: inherit; opacity: 1; }
 .trip-prose > :not(:first-child) { margin-top: 1.25em; }
 .dark .trip-prose { line-height: 1.95; }
-.trip-article .vote-form h3 { font-family: var(--font-journey-sans); font-size: 18px; font-weight: 380; line-height: 1.6; letter-spacing: 0; }
-.trip-article .trip-pagination-link .font-display { font-family: var(--font-journey-sans); font-size: 18px; font-weight: 380; line-height: 1.5; letter-spacing: 0; }
+.trip-article .vote-form h3 { font-family: var(--font-journey-serif); font-size: 18px; font-weight: 400; line-height: 1.6; letter-spacing: 0; }
+.trip-article .trip-pagination-link .font-display { font-family: var(--font-journey-serif); font-size: 18px; font-weight: 400; line-height: 1.5; letter-spacing: 0; }
 .trip-article .uppercase { letter-spacing: 0.08em; text-transform: none; }
-.photo-gallery-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 20px; font-family: var(--font-journey-sans); font-size: 1.125rem; line-height: 1.5; font-weight: 380; letter-spacing: 0.015em; color: var(--color-ink); }
+.photo-gallery-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 20px; font-family: var(--font-journey-serif); font-size: 1.125rem; line-height: 1.5; font-weight: 400; letter-spacing: 0.015em; color: var(--color-ink); }
 .photo-gallery-heading > span:first-child { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
-.photo-gallery-count { font-family: var(--font-journey-sans); font-size: 12px; font-weight: 330; letter-spacing: 0; color: var(--color-muted); font-variant-numeric: tabular-nums; }
+.photo-gallery-count { font-family: var(--font-journey-serif); font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--color-muted); font-variant-numeric: tabular-nums; }
 .photo-gallery-grid { column-gap: 10px; }
 .photo-gallery-batch + .photo-gallery-batch { margin-top: 24px; }
 .photo-gallery { scroll-margin-top: 168px; outline: none; }
