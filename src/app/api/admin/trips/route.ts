@@ -4,6 +4,7 @@ import { checkAuth } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
 import { lookupAdcode } from "@/lib/city-adcodes";
 import { dissolveDistricts, buildGeometry } from "@/lib/geo-utils";
+import { validateTripPresentation } from "@/lib/trip-presentation";
 
 
 function generateSlug(title: string, date?: string): string {
@@ -101,11 +102,18 @@ export async function GET() {
 export async function POST(request: Request) {
   if (!(await checkAuth(request))) return NextResponse.json({ error: "未授权" }, { status: 401 });
   const body = await request.json();
+  let presentation;
+  try {
+    presentation = validateTripPresentation(body);
+  } catch (reason) {
+    return NextResponse.json({ error: reason instanceof Error ? reason.message : "摘要或封面取景无效" }, { status: 400 });
+  }
   const { title, slug: customSlug, date, end_date, location, city_name, latitude, longitude, cover_image, content, rating } = body;
   const baseSlug = customSlug || generateSlug(title || "", date);
   const slug = await uniqueSlug(baseSlug);
   const { data, error } = await supabaseAdmin.from("trips").insert({
-    title, slug, date, end_date: end_date || null, location, city_name: city_name || null, latitude, longitude, cover_image: cover_image || null, content, rating
+    title, slug, date, end_date: end_date || null, location, city_name: city_name || null, latitude, longitude, cover_image: cover_image || null, content, rating,
+    ...presentation,
   }).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

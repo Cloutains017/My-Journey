@@ -9,6 +9,9 @@ export interface Trip {
   latitude: number;
   longitude: number;
   cover_image: string | null;
+  summary?: string | null;
+  cover_card_position?: import("./trip-presentation").CoverPosition | null;
+  cover_hero_position?: import("./trip-presentation").CoverPosition | null;
   content: string | null;
   photo_groups?: import("./photo-groups").PhotoGroup[] | null;
   rating: number;

@@ -82,12 +82,33 @@ test('trip snapshots created before photo grouping remain restorable', async () 
     await db.exec('set role service_role');
     const { rows } = await db.query<{ id: string }>(`select admin_archive_delete('trips','${trip}') as id`);
     await db.query(`update admin_recycle_bin
-      set payload = jsonb_set(payload, '{trips,0}', (payload->'trips'->0) - 'photo_groups')
+      set payload = jsonb_set(payload, '{trips,0}', (payload->'trips'->0) - 'photo_groups' - 'summary' - 'cover_card_position' - 'cover_hero_position')
       where id = $1`, [rows[0].id]);
     await db.query('select admin_restore($1)', [rows[0].id]);
     const restored = await db.query<{ photo_groups: unknown }>('select photo_groups from trips');
     assert.equal(restored.rows.length, 1);
     assert.equal(restored.rows[0].photo_groups, null);
+    assert.deepEqual((await db.query('select summary,cover_card_position,cover_hero_position from trips')).rows[0], {
+      summary: null, cover_card_position: null, cover_hero_position: null,
+    });
+  } finally { await db.close(); }
+});
+
+test('restoring a cover photo restores both crops after saving other trip changes', async () => {
+  const db = await database();
+  try {
+    await seed(db);
+    await db.exec('set role service_role');
+    await db.exec(`update trips set cover_card_position='{"x":10,"y":75}', cover_hero_position='{"x":80,"y":20}'`);
+    const { rows } = await db.query<{ id: string }>(`select admin_archive_delete('photos','${photo}') as id`);
+    assert.deepEqual((await db.query('select cover_image,cover_card_position,cover_hero_position from trips')).rows[0], {
+      cover_image: null, cover_card_position: null, cover_hero_position: null,
+    });
+    await db.exec("update trips set summary='新增摘要',cover_card_position=null,cover_hero_position=null");
+    await db.query('select admin_restore($1)', [rows[0].id]);
+    assert.deepEqual((await db.query('select summary,cover_image,cover_card_position,cover_hero_position from trips')).rows[0], {
+      summary: '新增摘要', cover_image: 'https://photos.test/a.jpg', cover_card_position: { x: 10, y: 75 }, cover_hero_position: { x: 80, y: 20 },
+    });
   } finally { await db.close(); }
 });
 

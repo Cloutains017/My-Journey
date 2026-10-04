@@ -7,6 +7,8 @@ import AdminSecurityPanel from "@/components/AdminSecurityPanel";
 import EducationAdmin from "@/components/EducationAdmin";
 import StorageAdmin from '@/components/StorageAdmin';
 import PhotoGroupEditor from "@/components/PhotoGroupEditor";
+import TripPresentationEditor from "@/components/TripPresentationEditor";
+import { changeTripCover, validateTripPresentation } from "@/lib/trip-presentation";
 import { RATING_LABELS, AGREEMENT_LABELS, DESIRE_LABELS, formatDateRange } from "@/lib/types";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
 import { deletePhotos } from "@/lib/photo-batch-delete";
@@ -159,6 +161,7 @@ export default function AdminClient() {
     setError("");
     setMessage("");
     try {
+      validateTripPresentation(tripData);
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -168,7 +171,7 @@ export default function AdminClient() {
       if (!res.ok) throw new Error(saved.error || "保存失败");
       if (isNew && saved?.id) openEditor({ ...tripData, ...saved });
       else setEditing({ ...tripData });
-      setMessage(isNew ? "旅程已创建，现在可以上传照片" : "旅程和照片分组已保存");
+      setMessage(isNew ? "旅程已创建，现在可以上传照片" : "旅程、摘要、封面取景和照片分组已保存");
       void fetchTrips();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "保存失败");
@@ -178,6 +181,7 @@ export default function AdminClient() {
   }
 
   function handleBulkGroup() {
+    if (saving) return;
     if (!selectedIds.length || bulkGroupId === "__select__" || (bulkGroupId && !photoGroups.some(group => group.id === bulkGroupId))) return;
     setPhotoGroups(current => assignPhotosToGroup(current, selectedIds, bulkGroupId));
     setSelection({ tripId: editingId, ids: [] });
@@ -192,7 +196,7 @@ export default function AdminClient() {
   }
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (deletingPhotosRef.current) return;
+    if (saving || uploadingRef.current || deletingPhotosRef.current) return;
     const files = e.target.files;
     if (!files || files.length === 0 || !editing?.id) return;
     setUploading(true);
@@ -236,7 +240,7 @@ export default function AdminClient() {
   }
 
   async function handlePhotoDelete(ids: string[]) {
-    if (deletingPhotosRef.current || uploading || !editingId) return;
+    if (saving || deletingPhotosRef.current || uploading || !editingId) return;
     const targets = photos.filter(photo => ids.includes(photo.id));
     if (!targets.length || !confirm(`将所选 ${targets.length} 张照片移入回收站？原图会保留，之后可以恢复。`)) return;
     deletingPhotosRef.current = true;
@@ -247,8 +251,8 @@ export default function AdminClient() {
       const { deletedIds, failedIds } = await deletePhotos(targets.map(photo => photo.id));
       const removedUrls = new Set(targets.filter(photo => deletedIds.includes(photo.id)).map(photo => photo.url));
       setPhotos(prev => prev.filter(photo => !deletedIds.includes(photo.id)));
-      setEditing(prev => prev?.id === editingId && prev.cover_image && removedUrls.has(prev.cover_image) ? { ...prev, cover_image: null } : prev);
-      setTrips(prev => prev.map(trip => trip.id === editingId && trip.cover_image && removedUrls.has(trip.cover_image) ? { ...trip, cover_image: null } : trip));
+      setEditing(prev => prev?.id === editingId && prev.cover_image && removedUrls.has(prev.cover_image) ? changeTripCover(prev, "") : prev);
+      setTrips(prev => prev.map(trip => trip.id === editingId && trip.cover_image && removedUrls.has(trip.cover_image) ? changeTripCover(trip, "") : trip));
       setSelection(prev => prev.tripId === editingId ? { ...prev, ids: failedIds } : prev);
       if (deletedIds.length) setMessage(`${deletedIds.length} 张照片已移入回收站`);
       if (failedIds.length) setError(`${failedIds.length} 张照片未能确认删除，已保留勾选。请刷新列表并检查回收站后重试。`);
@@ -430,11 +434,12 @@ export default function AdminClient() {
                 {error && <p role="alert" className="truncate text-xs text-red-500" title={error}>{error}</p>}
               </div>
               <div className="flex flex-shrink-0 items-center gap-2">
-                <button type="button" onClick={() => openEditor(null)} className="rounded-lg border border-hairline bg-surface-card px-4 py-2 text-sm text-muted hover:text-ink">取消</button>
+                <button type="button" disabled={saving} onClick={() => openEditor(null)} className="rounded-lg border border-hairline bg-surface-card px-4 py-2 text-sm text-muted hover:text-ink disabled:opacity-50">取消</button>
                 <button type="submit" form="trip-editor-form" disabled={saving || deletingPhotos || uploading} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-active disabled:opacity-50">{saving ? "保存中…" : "保存全部"}</button>
               </div>
             </div>
             <form id="trip-editor-form" onSubmit={handleSave} className="flex flex-col gap-5">
+              <fieldset disabled={saving || deletingPhotos || uploading} className="contents">
 
               <div>
                 <label className="text-xs text-muted mb-1.5 block">标题</label>
@@ -516,11 +521,8 @@ export default function AdminClient() {
 
               <div>
                 <label className="text-xs text-muted mb-1.5 block">封面图片 URL</label>
-                <input value={editing.cover_image || ""} onChange={(e) => setEditing({ ...editing, cover_image: e.target.value })}
+                <input value={editing.cover_image || ""} onChange={(e) => setEditing(changeTripCover(editing, e.target.value))}
                   placeholder="https://... 或从下方照片中点击「设为封面」" className={inputClass} />
-                {editing.cover_image && (
-                  <TravelImage src={editing.cover_image} alt="封面预览" width={128} height={80} className="mt-2 w-32 h-20 object-cover rounded-lg border border-hairline" />
-                )}
               </div>
 
               <div>
@@ -538,17 +540,21 @@ export default function AdminClient() {
                 </div>
               </div>
 
+              <TripPresentationEditor trip={editing} photoCount={photos.length} disabled={saving || deletingPhotos || uploading}
+                onChange={patch => setEditing(current => current ? { ...current, ...patch } : current)} />
+
               <div>
                 <label className="text-xs text-muted mb-1.5 block">文字内容</label>
                 <textarea value={editing.content || ""} onChange={(e) => setEditing({ ...editing, content: e.target.value })}
                   rows={8} className={`${inputClass} resize-none`} />
               </div>
 
+              </fieldset>
             </form>
 
             {/* Photo Management Section */}
             {editing.id && (
-              <div className="mt-10 pt-8 border-t border-hairline">
+              <fieldset disabled={saving} className="mt-10 pt-8 border-t border-hairline">
                 <h3 className="text-lg font-bold text-ink mb-4">📷 旅程照片 · {photos.length} 张</h3>
                 <PhotoGroupEditor
                   photos={photos}
@@ -600,8 +606,8 @@ export default function AdminClient() {
                               className="w-5 h-5 accent-primary" />
                           </label>
                           <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 flex flex-wrap items-center justify-center gap-2">
-                            <button type="button" disabled={deletingPhotos}
-                              onClick={() => setEditing({ ...editing, cover_image: photo.url })}
+                            <button type="button" disabled={saving || deletingPhotos || uploading}
+                              onClick={() => setEditing(changeTripCover(editing, photo.url))}
                               className="px-2 py-1 rounded bg-canvas text-ink text-xs font-semibold hover:bg-white"
                             >
                               设为封面
@@ -630,10 +636,11 @@ export default function AdminClient() {
 
                 {/* Upload area */}
                 <div className="border-2 border-dashed border-hairline rounded-xl p-8 text-center hover:border-primary/30 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => { if (!saving) fileInputRef.current?.click(); }}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
+                    if (saving) return;
                     const files = e.dataTransfer.files;
                     if (files.length > 0 && fileInputRef.current) {
                       const dt = new DataTransfer();
@@ -658,7 +665,7 @@ export default function AdminClient() {
                     onChange={handlePhotoUpload}
                   />
                 </div>
-              </div>
+              </fieldset>
             )}
           </div>
         )}

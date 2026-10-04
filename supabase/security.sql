@@ -101,9 +101,11 @@ begin
       'desire_votes',(select coalesce(jsonb_agg(to_jsonb(v)),'[]'::jsonb) from public.desire_votes v where trip_id = target_id));
   elsif target_table = 'photos' then
     bundle := bundle || jsonb_build_object('covers',
-      (select coalesce(jsonb_agg(jsonb_build_object('id',id,'cover_image',cover_image)),'[]'::jsonb)
+      (select coalesce(jsonb_agg(jsonb_build_object('id',id,'cover_image',cover_image,
+        'cover_card_position',cover_card_position,'cover_hero_position',cover_hero_position)),'[]'::jsonb)
        from public.trips where cover_image = row_data->>'url'));
-    update public.trips set cover_image = null where cover_image = row_data->>'url';
+    update public.trips set cover_image = null, cover_card_position = null, cover_hero_position = null
+      where cover_image = row_data->>'url';
   end if;
   insert into public.admin_recycle_bin(target,record_id,label,payload)
     values(target_table,target_id,coalesce(row_data->>'title',row_data->>'caption',row_data->>'nickname','照片'),bundle)
@@ -127,7 +129,9 @@ begin
     end if;
   end loop;
   for cover in select value from jsonb_array_elements(coalesce(entry.payload->'covers','[]'::jsonb)) loop
-    update public.trips set cover_image = cover->>'cover_image'
+    update public.trips set cover_image = cover->>'cover_image',
+      cover_card_position = case when cover ? 'cover_card_position' then nullif(cover->'cover_card_position','null'::jsonb) else cover_card_position end,
+      cover_hero_position = case when cover ? 'cover_hero_position' then nullif(cover->'cover_hero_position','null'::jsonb) else cover_hero_position end
       where id = (cover->>'id')::uuid and cover_image is null;
   end loop;
   update public.admin_recycle_bin set restored_at = now() where id = archive_id;

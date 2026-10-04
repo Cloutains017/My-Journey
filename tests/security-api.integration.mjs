@@ -20,6 +20,27 @@ test('real Next handlers enforce sessions, origin, rate limits and recoverable d
       const data = body ? JSON.parse(body) : {};
       const url = new URL(req.url,'http://localhost');
       if (unavailable) return send(503,{message:'test outage'});
+      if (url.pathname === '/rest/v1/trips') {
+        if (req.method === 'GET') {
+          const id = url.searchParams.get('id')?.replace(/^eq\./, '');
+          const slug = url.searchParams.get('slug')?.replace(/^eq\./, '');
+          const result = id ? await db.query('select * from trips where id = $1', [id])
+            : slug ? await db.query('select * from trips where slug = $1', [slug]) : await db.query('select * from trips');
+          return send(200, result.rows);
+        }
+        const columns = Object.keys(data);
+        assert.ok(columns.every(column => /^[a-z_]+$/.test(column)));
+        const values = columns.map(column => typeof data[column] === 'object' && data[column] !== null ? JSON.stringify(data[column]) : data[column]);
+        if (req.method === 'POST') {
+          const result = await db.query(`insert into trips (${columns.join(',')}) values (${columns.map((_,i) => `$${i+1}`).join(',')}) returning *`, values);
+          return send(201, result.rows[0]);
+        }
+        if (req.method === 'PATCH') {
+          values.push(url.searchParams.get('id')?.replace(/^eq\./, ''));
+          await db.query(`update trips set ${columns.map((column,i) => `${column}=$${i+1}`).join(',')} where id=$${values.length}`, values);
+          return send(200, null);
+        }
+      }
       if (url.pathname === '/rest/v1/rpc/admin_login_attempt') {
         const r = await db.query('select admin_login_attempt($1) as allowed',[data.source_key]);
         return send(200,r.rows[0].allowed);
@@ -70,6 +91,26 @@ test('real Next handlers enforce sessions, origin, rate limits and recoverable d
     const cookie = response.headers.get('set-cookie').split(';')[0];
     assert.match(response.headers.get('set-cookie'),/HttpOnly/i);
     const authenticated = {Cookie:cookie,Origin:base,'Content-Type':'application/json'};
+    const editable = { title: '本地测试', slug: 'local-test', date: '2026-01-01', location: '福州市', latitude: 1, longitude: 1, rating: 3, city_name: null, cover_image: 'https://images.test/cover.jpg', content: '正文开头' };
+    const presentation = { summary: '  暴雨后的城市  ', cover_card_position: { x: 10, y: 75 }, cover_hero_position: { x: 80, y: 20 } };
+    response = await fetch(base+'/api/admin/trips', { method:'POST', headers:authenticated, body:JSON.stringify({ ...editable, slug:'editorial-create', ...presentation }) });
+    assert.equal(response.status, 200, await response.clone().text());
+    const created = await response.json();
+    assert.equal(created.summary, '暴雨后的城市');
+    assert.deepEqual(created.cover_card_position, { x:10, y:75 });
+    assert.deepEqual(created.cover_hero_position, { x:80, y:20 });
+    await db.query('delete from trips where id=$1', [created.id]);
+    const save = body => fetch(base+`/api/admin/trips/${id}`, { method:'PUT', headers:authenticated, body:JSON.stringify(body) });
+    assert.equal((await save({ ...editable, ...presentation })).status, 200);
+    assert.equal((await save({ ...editable, title:'兼容旧客户端' })).status, 200);
+    let stored = (await db.query('select summary,cover_card_position,cover_hero_position from trips where id=$1',[id])).rows[0];
+    assert.deepEqual(stored, { summary:'暴雨后的城市', cover_card_position:{ x:10,y:75 }, cover_hero_position:{ x:80,y:20 } });
+    assert.equal((await save({ ...editable, summary:'山'.repeat(121) })).status, 400);
+    assert.equal((await save({ ...editable, cover_hero_position:{x:-1,y:50} })).status, 400);
+    assert.equal((await save({ ...editable, cover_image:'https://images.test/new.jpg' })).status, 200);
+    stored = (await db.query('select cover_card_position,cover_hero_position from trips where id=$1',[id])).rows[0];
+    assert.deepEqual(stored, { cover_card_position:null, cover_hero_position:null });
+    assert.equal((await save({ ...editable, ...presentation })).status, 200);
     assert.equal((await fetch(base+`/api/admin/trips/${id}`,{method:'DELETE',headers:{...authenticated,Origin:'https://evil.test'}})).status,401);
     for (const path of [`/trips/${id}`,`/photos/${id}`,`/votes/agreement/${id}`,`/votes/desire/${id}`]) {
       assert.equal((await fetch(base+'/api/admin'+path,{method:'DELETE',headers:{...authenticated,Cookie:'admin_token=authenticated'}})).status,401);
@@ -78,6 +119,9 @@ test('real Next handlers enforce sessions, origin, rate limits and recoverable d
     assert.equal((await login('local-test-strong-password')).status,503);
     assert.equal((await fetch(base+`/api/admin/trips/${id}`,{method:'DELETE',headers:authenticated})).status,503);
     assert.equal((await db.query('select * from trips')).rows.length,1);
+    assert.deepEqual((await db.query('select summary,cover_card_position,cover_hero_position from trips where id=$1',[id])).rows[0], {
+      summary:'暴雨后的城市', cover_card_position:{x:10,y:75}, cover_hero_position:{x:80,y:20},
+    });
     unavailable = false;
     response = await fetch(base+`/api/admin/trips/${id}`,{method:'DELETE',headers:authenticated});
     assert.equal(response.status,200,await response.clone().text());
@@ -86,6 +130,9 @@ test('real Next handlers enforce sessions, origin, rate limits and recoverable d
     response = await fetch(base+'/api/admin/recycle-bin',{method:'POST',headers:authenticated,body:JSON.stringify({id:archive})});
     assert.equal(response.status,200,await response.clone().text());
     assert.equal((await db.query('select * from trips')).rows.length,1);
+    assert.deepEqual((await db.query('select summary,cover_card_position,cover_hero_position from trips where id=$1',[id])).rows[0], {
+      summary:'暴雨后的城市', cover_card_position:{x:10,y:75}, cover_hero_position:{x:80,y:20},
+    });
     for(let n=0;n<9;n++) assert.equal((await login('wrong')).status,401);
     assert.equal((await login('local-test-strong-password')).status,429);
     response = await fetch(base+'/api/admin/auth',{method:'DELETE',headers:authenticated});

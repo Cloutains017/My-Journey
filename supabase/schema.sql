@@ -10,6 +10,27 @@ create table trips (
   latitude float8 not null,
   longitude float8 not null,
   cover_image text,
+  summary text constraint trips_summary_length check (char_length(summary) <= 120),
+  cover_card_position jsonb constraint trips_card_position_valid check (
+    case when cover_card_position is null then true
+      when jsonb_typeof(cover_card_position) = 'object'
+        and jsonb_typeof(cover_card_position->'x') = 'number'
+        and jsonb_typeof(cover_card_position->'y') = 'number'
+        and cover_card_position - 'x' - 'y' = '{}'::jsonb
+      then (cover_card_position->>'x')::numeric between 0 and 100
+        and (cover_card_position->>'y')::numeric between 0 and 100
+      else false end
+  ),
+  cover_hero_position jsonb constraint trips_hero_position_valid check (
+    case when cover_hero_position is null then true
+      when jsonb_typeof(cover_hero_position) = 'object'
+        and jsonb_typeof(cover_hero_position->'x') = 'number'
+        and jsonb_typeof(cover_hero_position->'y') = 'number'
+        and cover_hero_position - 'x' - 'y' = '{}'::jsonb
+      then (cover_hero_position->>'x')::numeric between 0 and 100
+        and (cover_hero_position->>'y')::numeric between 0 and 100
+      else false end
+  ),
   content text,
   photo_groups jsonb default '[]'::jsonb,
   rating int2 not null check (rating between 1 and 5),
