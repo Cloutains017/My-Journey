@@ -499,6 +499,7 @@ a {
 .back-to-top:focus-visible, .photo-gallery-tile:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
 .trip-prose > p { line-height: 1.9; overflow-wrap: anywhere; }
 .photo-gallery-grid { column-gap: 10px; }
+.photo-gallery-batch + .photo-gallery-batch { margin-top: 24px; }
 .photo-gallery { scroll-margin-top: 168px; outline: none; }
 .photo-group-nav { position: sticky; top: 64px; z-index: 25; padding: 12px 0; margin-bottom: 24px; border-bottom: 1px solid var(--color-hairline); background: var(--color-canvas); }
 .photo-group-link { display: inline-flex; min-height: 44px; align-items: center; gap: 8px; flex-shrink: 0; padding: 8px 14px; border: 1px solid var(--color-hairline); border-radius: 10px; font-size: 13px; color: var(--color-ink); }
@@ -511,6 +512,7 @@ a {
 .photo-gallery-tile .travel-image[data-image-state="loading"], .trip-card-media .travel-image[data-image-state="loading"] { opacity: 0; }
 @media (min-width: 640px) {
   .photo-gallery-grid { column-gap: 12px; }
+  .photo-gallery-batch + .photo-gallery-batch { margin-top: 32px; }
   .photo-gallery-tile { margin-bottom: 12px; }
   .back-to-top { right: 28px; bottom: 28px; }
 }
