@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
 import { archiveDelete } from "@/lib/admin-recycle";
 import { validatePhotoGroups } from "@/lib/photo-groups";
-import { validateTripPresentation } from "@/lib/trip-presentation";
+import { validateTripPresentation, mobileCoverPosition } from "@/lib/trip-presentation";
 
 
 function generateSlug(title: string, date?: string): string {
@@ -35,14 +35,21 @@ export async function PUT(
     return NextResponse.json({ error: reason instanceof Error ? reason.message : "摘要或封面取景无效" }, { status: 400 });
   }
   const { title, slug: customSlug, date, end_date, location, city_name, latitude, longitude, cover_image, content, rating } = body;
-  if (Object.hasOwn(body, "cover_image") &&
-    (!Object.hasOwn(body, "cover_card_position") || !Object.hasOwn(body, "cover_hero_position"))) {
-    const { data: previous, error: previousError } = await supabaseAdmin.from("trips").select("cover_image").eq("id", id).maybeSingle();
+  const mobileOmitted = !Object.hasOwn(body, "cover_mobile_position");
+  const needsPrevious = (Object.hasOwn(body, "cover_image") &&
+    (!Object.hasOwn(body, "cover_card_position") || !Object.hasOwn(body, "cover_hero_position") || mobileOmitted)) ||
+    (Object.hasOwn(body, "cover_hero_position") && mobileOmitted);
+  if (needsPrevious) {
+    const { data: previous, error: previousError } = await supabaseAdmin.from("trips").select("cover_image,cover_hero_position,cover_mobile_position").eq("id", id).maybeSingle();
     if (previousError) return NextResponse.json({ error: "读取封面失败" }, { status: 500 });
     if (!previous) return NextResponse.json({ error: "旅程不存在" }, { status: 404 });
-    if ((cover_image || null) !== previous.cover_image) {
+    if (Object.hasOwn(body, "cover_image") && (cover_image || null) !== previous.cover_image) {
       if (!Object.hasOwn(body, "cover_card_position")) presentation.cover_card_position = null;
       if (!Object.hasOwn(body, "cover_hero_position")) presentation.cover_hero_position = null;
+      if (!Object.hasOwn(body, "cover_mobile_position")) presentation.cover_mobile_position = null;
+    } else if (Object.hasOwn(body, "cover_hero_position") && mobileOmitted && !previous.cover_mobile_position) {
+      // A tab opened before this update still sends only the desktop crop.
+      presentation.cover_mobile_position = { ...mobileCoverPosition(previous) };
     }
   }
   let photoGroups;

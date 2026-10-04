@@ -5,6 +5,7 @@ export interface TripPresentation {
   summary: string | null;
   cover_card_position: CoverPosition | null;
   cover_hero_position: CoverPosition | null;
+  cover_mobile_position: CoverPosition | null;
 }
 
 export const SUMMARY_MAX_LENGTH = 120;
@@ -22,6 +23,16 @@ export function coverObjectPosition(value?: CoverPosition | null): string {
   return `${point.x}% ${point.y}%`;
 }
 
+/** Unedited mobile covers keep their original shared crop, including old backups. */
+export function mobileCoverPosition(trip: Partial<TripPresentation>): CoverPosition {
+  return trip.cover_mobile_position || trip.cover_hero_position || CENTER_COVER;
+}
+
+export function changeHeroCoverPosition(trip: Partial<TripPresentation>, device: "desktop" | "mobile", point: CoverPosition | null): Partial<TripPresentation> {
+  if (device === "mobile") return { cover_mobile_position: point || { ...CENTER_COVER } };
+  return { cover_hero_position: point, cover_mobile_position: { ...mobileCoverPosition(trip) } };
+}
+
 export function getTripExcerpt(trip: { summary?: string | null; content?: string | null }): string {
   const summary = trip.summary?.trim();
   const text = summary || trip.content?.replace(/[#*`>]/g, "").replace(/\s+/g, " ").trim();
@@ -37,7 +48,7 @@ export function validateTripPresentation(body: Record<string, unknown>): Partial
     if (summary && Array.from(summary).length > SUMMARY_MAX_LENGTH) throw new Error("摘要最多 120 个字");
     result.summary = summary;
   }
-  for (const field of ["cover_card_position", "cover_hero_position"] as const) {
+  for (const field of ["cover_card_position", "cover_hero_position", "cover_mobile_position"] as const) {
     if (!Object.hasOwn(body, field)) continue;
     const value = body[field];
     if (value !== null && !isCoverPosition(value)) throw new Error("封面取景位置必须在 0 到 100 之间");
@@ -49,7 +60,7 @@ export function validateTripPresentation(body: Record<string, unknown>): Partial
 export function changeTripCover<T extends Partial<Trip>>(trip: T, source: string): T {
   const cover = source || null;
   return (trip.cover_image || null) === cover ? trip : {
-    ...trip, cover_image: cover, cover_card_position: null, cover_hero_position: null,
+    ...trip, cover_image: cover, cover_card_position: null, cover_hero_position: null, cover_mobile_position: null,
   };
 }
 

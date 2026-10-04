@@ -102,9 +102,10 @@ begin
   elsif target_table = 'photos' then
     bundle := bundle || jsonb_build_object('covers',
       (select coalesce(jsonb_agg(jsonb_build_object('id',id,'cover_image',cover_image,
-        'cover_card_position',cover_card_position,'cover_hero_position',cover_hero_position)),'[]'::jsonb)
+        'cover_card_position',cover_card_position,'cover_hero_position',cover_hero_position,
+        'cover_mobile_position',cover_mobile_position)),'[]'::jsonb)
        from public.trips where cover_image = row_data->>'url'));
-    update public.trips set cover_image = null, cover_card_position = null, cover_hero_position = null
+    update public.trips set cover_image = null, cover_card_position = null, cover_hero_position = null, cover_mobile_position = null
       where cover_image = row_data->>'url';
   end if;
   insert into public.admin_recycle_bin(target,record_id,label,payload)
@@ -131,7 +132,8 @@ begin
   for cover in select value from jsonb_array_elements(coalesce(entry.payload->'covers','[]'::jsonb)) loop
     update public.trips set cover_image = cover->>'cover_image',
       cover_card_position = case when cover ? 'cover_card_position' then nullif(cover->'cover_card_position','null'::jsonb) else cover_card_position end,
-      cover_hero_position = case when cover ? 'cover_hero_position' then nullif(cover->'cover_hero_position','null'::jsonb) else cover_hero_position end
+      cover_hero_position = case when cover ? 'cover_hero_position' then nullif(cover->'cover_hero_position','null'::jsonb) else cover_hero_position end,
+      cover_mobile_position = case when cover ? 'cover_mobile_position' then nullif(cover->'cover_mobile_position','null'::jsonb) else null end
       where id = (cover->>'id')::uuid and cover_image is null;
   end loop;
   update public.admin_recycle_bin set restored_at = now() where id = archive_id;

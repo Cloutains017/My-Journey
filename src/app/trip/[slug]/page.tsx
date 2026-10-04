@@ -12,7 +12,8 @@ import ReadingProgress from "@/components/ReadingProgress";
 import TripNavigation, { type NavigationTrip } from "@/components/TripNavigation";
 import { adjacentTrips } from "@/lib/journey-browsing";
 import { notFound } from "next/navigation";
-import { coverObjectPosition } from "@/lib/trip-presentation";
+import { coverObjectPosition, mobileCoverPosition } from "@/lib/trip-presentation";
+import type { CSSProperties } from "react";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -65,7 +66,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
 
       <header id="trip-top" tabIndex={-1} data-trip-hero className="relative -mt-16 isolate min-h-[100svh] overflow-hidden bg-[#172234] text-white">
         {t.cover_image && (
-          <TravelImage src={t.cover_image} alt="" fill sizes="100vw" preload variant="hero" className="-z-10 object-cover" style={{ objectPosition: coverObjectPosition(t.cover_hero_position) }} />
+          <TravelImage src={t.cover_image} alt="" fill sizes="100vw" preload variant="hero" className="trip-hero-cover -z-10 object-cover" style={{ "--cover-desktop-position": coverObjectPosition(t.cover_hero_position), "--cover-mobile-position": coverObjectPosition(mobileCoverPosition(t)) } as CSSProperties} />
         )}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(12,20,31,0.56)_0%,rgba(12,20,31,0.28)_28%,rgba(12,20,31,0.56)_72%,rgba(12,20,31,0.7)_100%)]" aria-hidden="true" />
         <div className="trip-hero-layout">

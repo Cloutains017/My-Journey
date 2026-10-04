@@ -4,6 +4,7 @@ import {
   getTripExcerpt, coverObjectPosition, validateTripPresentation, changeTripCover,
   dragCoverPosition,
 } from "../src/lib/trip-presentation.ts";
+import * as presentation from "../src/lib/trip-presentation.ts";
 
 test("home excerpts prefer an edited summary and fall back to readable legacy content", () => {
   assert.equal(getTripExcerpt({ summary: "  暴雨后的城市  ", content: "正文开头" }), "暴雨后的城市");
@@ -34,10 +35,10 @@ test("legacy cover positions render centered and separate placements keep separa
   assert.equal(coverObjectPosition({ x: 150, y: 25 }), "50% 50%");
 });
 
-test("changing the cover resets both crops while reselecting the same photo preserves them", () => {
+test("changing the cover resets all crops while reselecting the same photo preserves them", () => {
   const trip = { title: "山路", cover_image: "a.jpg", cover_card_position: { x: 20, y: 80 }, cover_hero_position: { x: 60, y: 10 } };
   assert.deepEqual(changeTripCover(trip, "a.jpg"), trip);
-  assert.deepEqual(changeTripCover(trip, "b.jpg"), { ...trip, cover_image: "b.jpg", cover_card_position: null, cover_hero_position: null });
+  assert.deepEqual(changeTripCover(trip, "b.jpg"), { ...trip, cover_image: "b.jpg", cover_card_position: null, cover_hero_position: null, cover_mobile_position: null });
   assert.equal(changeTripCover(trip, "").cover_image, null);
 });
 
@@ -48,4 +49,25 @@ test("dragging follows the photo, clamps at its edges, and ignores axes without 
   // A portrait photo fills a landscape frame; only vertical positioning can change.
   assert.deepEqual(dragCoverPosition({ x: 50, y: 50 }, { x: 40, y: 90 }, { width: 400, height: 300 }, { width: 800, height: 1200 }), { x: 50, y: 20 });
   assert.deepEqual(dragCoverPosition({ x: 20, y: 60 }, { x: 50, y: 20 }, { width: 0, height: 0 }, { width: 0, height: 0 }), { x: 20, y: 60 });
+});
+
+test("mobile framing is validated and changing the photo resets every placement", () => {
+  assert.deepEqual(validateTripPresentation({ cover_mobile_position: { x: 15, y: 85 } }), { cover_mobile_position: { x: 15, y: 85 } });
+  assert.throws(() => validateTripPresentation({ cover_mobile_position: { x: 10, y: 120 } }), /取景/);
+  const trip = { cover_image: "a.jpg", cover_mobile_position: { x: 15, y: 85 } };
+  assert.equal(changeTripCover(trip, "a.jpg"), trip);
+  assert.equal(changeTripCover(trip, "b.jpg").cover_mobile_position, null);
+});
+
+test("desktop and mobile framing remain independent and legacy mobile crops stay unchanged", () => {
+  const trip = { cover_hero_position: { x: 70, y: 20 }, cover_mobile_position: null };
+  assert.deepEqual(presentation.mobileCoverPosition(trip), { x: 70, y: 20 });
+  const desktopChange = presentation.changeHeroCoverPosition(trip, "desktop", { x: 10, y: 90 });
+  assert.deepEqual(desktopChange, { cover_hero_position: { x: 10, y: 90 }, cover_mobile_position: { x: 70, y: 20 } });
+  const mobileReset = presentation.changeHeroCoverPosition(trip, "mobile", null);
+  assert.deepEqual(mobileReset, { cover_mobile_position: { x: 50, y: 50 } });
+  assert.deepEqual(presentation.mobileCoverPosition({ ...trip, ...mobileReset }), { x: 50, y: 50 });
+  assert.deepEqual(presentation.changeHeroCoverPosition({ ...trip, ...desktopChange }, "desktop", null), {
+    cover_hero_position: null, cover_mobile_position: { x: 70, y: 20 },
+  });
 });

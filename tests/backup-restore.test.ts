@@ -15,6 +15,7 @@ const trip = {
   id: tripId, title: "山路", slug: "mountain", date: "2026-09-01", location: "山中",
   latitude: 30, longitude: 120, rating: 4, photo_groups: [],
   summary: "山路上的日落", cover_card_position: { x: 10, y: 70 }, cover_hero_position: { x: 80, y: 30 },
+  cover_mobile_position: { x: 25, y: 85 },
 };
 const photo = { id: photoId, trip_id: tripId, url: "https://example.com/photo.jpg", sort_order: 0 };
 
@@ -34,8 +35,9 @@ test("restore inserts related rows, is repeatable, and refuses to overwrite chan
     await restoreDatabase(db, tables);
     assert.equal((await db.query<{ n: number }>("select count(*)::int as n from trips")).rows[0].n, 1);
     assert.equal((await db.query<{ n: number }>("select count(*)::int as n from photos")).rows[0].n, 1);
-    assert.deepEqual((await db.query("select summary,cover_card_position,cover_hero_position from trips")).rows[0], {
+    assert.deepEqual((await db.query("select summary,cover_card_position,cover_hero_position,cover_mobile_position from trips")).rows[0], {
       summary: "山路上的日落", cover_card_position: { x: 10, y: 70 }, cover_hero_position: { x: 80, y: 30 },
+      cover_mobile_position: { x: 25, y: 85 },
     });
 
     await db.query("update trips set title = '已修改' where id = $1", [tripId]);
@@ -57,7 +59,7 @@ test("legacy rows use current schema defaults", async () => {
   try {
     await db.exec("create role anon; create role authenticated; create role service_role bypassrls;");
     await db.exec(await readFile(new URL("../supabase/schema.sql", import.meta.url), "utf8"));
-    const legacyTrip = Object.fromEntries(Object.entries(trip).filter(([key]) => !["photo_groups", "summary", "cover_card_position", "cover_hero_position"].includes(key)));
+    const legacyTrip = Object.fromEntries(Object.entries(trip).filter(([key]) => !["photo_groups", "summary", "cover_card_position", "cover_hero_position", "cover_mobile_position"].includes(key)));
     const tables = [
       { table: "trips", rows: [legacyTrip] }, { table: "photos", rows: [] },
       { table: "agreement_votes", rows: [] }, { table: "desire_votes", rows: [] },
@@ -66,7 +68,7 @@ test("legacy rows use current schema defaults", async () => {
     await restoreDatabase(db, tables);
     await restoreDatabase(db, tables);
     assert.deepEqual((await db.query<{ photo_groups: unknown }>("select photo_groups from trips")).rows[0].photo_groups, []);
-    assert.deepEqual((await db.query("select summary,cover_card_position,cover_hero_position from trips")).rows[0], { summary: null, cover_card_position: null, cover_hero_position: null });
+    assert.deepEqual((await db.query("select summary,cover_card_position,cover_hero_position,cover_mobile_position from trips")).rows[0], { summary: null, cover_card_position: null, cover_hero_position: null, cover_mobile_position: null });
   } finally {
     await db.close();
   }

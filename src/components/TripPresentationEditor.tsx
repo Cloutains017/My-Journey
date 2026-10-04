@@ -5,10 +5,11 @@ import TravelImage from "@/components/TravelImage";
 import TripCard from "@/components/TripCard";
 import RatingBadge from "@/components/RatingBadge";
 import { formatDateRange, type Trip } from "@/lib/types";
-import { CENTER_COVER, SUMMARY_MAX_LENGTH, coverObjectPosition, dragCoverPosition, type CoverPosition, type TripPresentation } from "@/lib/trip-presentation";
+import { CENTER_COVER, SUMMARY_MAX_LENGTH, coverObjectPosition, dragCoverPosition, mobileCoverPosition, changeHeroCoverPosition, type CoverPosition, type TripPresentation } from "@/lib/trip-presentation";
 
-type PositionField = "cover_card_position" | "cover_hero_position";
-type PreviewStyle = CSSProperties & { "--card-position": string; "--hero-position": string };
+const POSITION_VARIABLES = { cover_card_position: "--card-position", cover_hero_position: "--hero-position", cover_mobile_position: "--mobile-position" } as const;
+type PositionField = keyof typeof POSITION_VARIABLES;
+type PreviewStyle = CSSProperties & { "--card-position": string; "--hero-position": string; "--mobile-position": string };
 
 function subscribeViewport(onChange: () => void) {
   window.addEventListener("resize", onChange);
@@ -37,7 +38,7 @@ function heroCopyStyle(width: number, height: number): CSSProperties {
 
 function CropFrame({ source, position, label, positionVariable, onChange, onPreview, children, className = "", style, disabled = false }: {
   source: string; position?: CoverPosition | null; label: string;
-  positionVariable: "--card-position" | "--hero-position";
+  positionVariable: "--card-position" | "--hero-position" | "--mobile-position";
   onChange: (position: CoverPosition) => void;
   onPreview: (position: CoverPosition) => void;
   children?: React.ReactNode; className?: string; style?: CSSProperties; disabled?: boolean;
@@ -101,17 +102,17 @@ function CropFrame({ source, position, label, positionVariable, onChange, onPrev
   </div>;
 }
 
-function CropControls({ label, value, onChange }: { label: string; value?: CoverPosition | null; onChange: (position: CoverPosition | null) => void }) {
+function CropControls({ label, value, onChange, disabled = false }: { label: string; value?: CoverPosition | null; onChange: (position: CoverPosition | null) => void; disabled?: boolean }) {
   const point = value || CENTER_COVER;
   function move(x: number, y: number) {
     onChange({ x: Math.max(0, Math.min(100, point.x + x)), y: Math.max(0, Math.min(100, point.y + y)) });
   }
   return <div className="cover-crop-controls" role="group" aria-label={`${label}调整按钮`}>
-    <button type="button" aria-label={`${label}向左移动照片`} onClick={() => move(5, 0)}>向左</button>
-    <button type="button" aria-label={`${label}向右移动照片`} onClick={() => move(-5, 0)}>向右</button>
-    <button type="button" aria-label={`${label}向上移动照片`} onClick={() => move(0, 5)}>向上</button>
-    <button type="button" aria-label={`${label}向下移动照片`} onClick={() => move(0, -5)}>向下</button>
-    <button type="button" onClick={() => onChange(null)}>恢复居中</button>
+    <button className="cover-control-up" type="button" disabled={disabled} aria-label={`${label}向上移动照片`} title="向上移动照片" onClick={() => move(0, 5)}><span aria-hidden="true">↑</span></button>
+    <button className="cover-control-left" type="button" disabled={disabled} aria-label={`${label}向左移动照片`} title="向左移动照片" onClick={() => move(5, 0)}><span aria-hidden="true">←</span></button>
+    <button className="cover-control-center" type="button" disabled={disabled} aria-label={`${label}恢复居中`} title="恢复居中" onClick={() => onChange(null)}>居中</button>
+    <button className="cover-control-right" type="button" disabled={disabled} aria-label={`${label}向右移动照片`} title="向右移动照片" onClick={() => move(-5, 0)}><span aria-hidden="true">→</span></button>
+    <button className="cover-control-down" type="button" disabled={disabled} aria-label={`${label}向下移动照片`} title="向下移动照片" onClick={() => move(0, -5)}><span aria-hidden="true">↓</span></button>
   </div>;
 }
 
@@ -122,16 +123,18 @@ export default function TripPresentationEditor({ trip, photoCount, onChange, dis
   const summary = trip.summary || "";
   const length = Array.from(summary.replace(/\s+/g, " ").trim()).length;
   const previewTrip = { ...trip, title: trip.title || "游记标题", date: trip.date || "", rating: trip.rating || 3 } as Trip;
-  const previewStyle: PreviewStyle = { "--card-position": coverObjectPosition(trip.cover_card_position), "--hero-position": coverObjectPosition(trip.cover_hero_position) };
+  const mobilePosition = mobileCoverPosition(trip);
+  const previewStyle: PreviewStyle = { "--card-position": coverObjectPosition(trip.cover_card_position), "--hero-position": coverObjectPosition(trip.cover_hero_position), "--mobile-position": coverObjectPosition(mobilePosition) };
   const [width, height] = useSyncExternalStore(subscribeViewport, getViewport, getServerViewport).split(",").map(Number);
   const desktop = width >= 768 ? { width, height } : { width: 1440, height: 900 };
   const mobile = width < 768 ? { width, height } : { width: 390, height: 844 };
   function preview(field: PositionField, point: CoverPosition) {
-    previewRoot.current?.style.setProperty(field === "cover_card_position" ? "--card-position" : "--hero-position", coverObjectPosition(point));
+    previewRoot.current?.style.setProperty(POSITION_VARIABLES[field], coverObjectPosition(point));
   }
   function commit(field: PositionField, point: CoverPosition | null) {
-    preview(field, point || CENTER_COVER);
-    onChange({ [field]: point });
+    const patch = field === "cover_card_position" ? { cover_card_position: point } : changeHeroCoverPosition(trip, field === "cover_hero_position" ? "desktop" : "mobile", point);
+    for (const key of Object.keys(patch) as PositionField[]) preview(key, patch[key] || CENTER_COVER);
+    onChange(patch);
   }
   function heroCopy(size: { width: number; height: number }) {
     return <div className="cover-hero-copy" style={heroCopyStyle(size.width, size.height)}>
@@ -165,27 +168,33 @@ export default function TripPresentationEditor({ trip, photoCount, onChange, dis
             <CropFrame key={`card-${trip.cover_image}`} source={trip.cover_image} label="首页封面取景" position={trip.cover_card_position} positionVariable="--card-position" disabled={disabled}
               onChange={point => commit("cover_card_position", point)} onPreview={point => preview("cover_card_position", point)} /> : undefined} />
         </div>
-        {trip.cover_image && <CropControls label="首页封面" value={trip.cover_card_position} onChange={point => commit("cover_card_position", point)} />}
+        {trip.cover_image && <CropControls label="首页封面" value={trip.cover_card_position} disabled={disabled} onChange={point => commit("cover_card_position", point)} />}
       </div>
       {trip.cover_image ? <>
-        <p id="cover-crop-help" className="cover-crop-help">拖动照片调整取景，也可使用方向按钮或聚焦图片后按方向键。首页和详情页分别保存，手机预览跟随详情页取景。</p>
+        <p id="cover-crop-help" className="cover-crop-help">拖动照片或使用十字方向键调整取景，中央按钮恢复居中。首页、电脑和手机分别保存，互不影响。</p>
         <div>
-          <h3 className="cover-preview-heading">详情页封面预览 <span className="text-xs text-muted">{desktop.width} × {desktop.height}</span></h3>
-          <CropFrame key={`hero-${trip.cover_image}`} source={trip.cover_image} label="详情页封面取景" position={trip.cover_hero_position} positionVariable="--hero-position" className="cover-desktop-preview" disabled={disabled}
-            style={{ aspectRatio: `${desktop.width} / ${desktop.height}` }}
-            onChange={point => commit("cover_hero_position", point)} onPreview={point => preview("cover_hero_position", point)}>
-            <div className="cover-hero-shade" aria-hidden="true" />{heroCopy(desktop)}
-          </CropFrame>
-          <CropControls label="详情页封面" value={trip.cover_hero_position} onChange={point => commit("cover_hero_position", point)} />
-        </div>
-        <details className="cover-mobile-disclosure">
-          <summary>检查手机封面</summary>
-          <div className="cover-mobile-preview relative overflow-hidden" style={{ aspectRatio: `${mobile.width} / ${mobile.height}` }}>
-            <TravelImage src={trip.cover_image} alt="手机封面预览" fill sizes="320px" variant="hero" className="object-cover" style={{ objectPosition: "var(--hero-position)" }} />
-            <div className="cover-hero-shade" aria-hidden="true" />{heroCopy(mobile)}
+          <h3 className="cover-preview-heading">详情页封面预览</h3>
+          <div className="cover-device-previews">
+            <div className="cover-device-preview">
+              <h4 className="cover-device-heading">电脑封面 <span>{desktop.width} × {desktop.height}</span></h4>
+              <CropFrame key={`hero-${trip.cover_image}`} source={trip.cover_image} label="电脑封面取景" position={trip.cover_hero_position} positionVariable="--hero-position" className="cover-desktop-preview" disabled={disabled}
+                style={{ aspectRatio: `${desktop.width} / ${desktop.height}` }}
+                onChange={point => commit("cover_hero_position", point)} onPreview={point => preview("cover_hero_position", point)}>
+                <div className="cover-hero-shade" aria-hidden="true" />{heroCopy(desktop)}
+              </CropFrame>
+              <CropControls label="电脑封面" value={trip.cover_hero_position} disabled={disabled} onChange={point => commit("cover_hero_position", point)} />
+            </div>
+            <div className="cover-device-preview">
+              <h4 className="cover-device-heading">手机封面 <span>{mobile.width} × {mobile.height}</span></h4>
+              <CropFrame key={`mobile-${trip.cover_image}`} source={trip.cover_image} label="手机封面取景" position={mobilePosition} positionVariable="--mobile-position" className="cover-mobile-preview" disabled={disabled}
+                style={{ aspectRatio: `${mobile.width} / ${mobile.height}` }}
+                onChange={point => commit("cover_mobile_position", point)} onPreview={point => preview("cover_mobile_position", point)}>
+                <div className="cover-hero-shade" aria-hidden="true" />{heroCopy(mobile)}
+              </CropFrame>
+              <CropControls label="手机封面" value={mobilePosition} disabled={disabled} onChange={point => commit("cover_mobile_position", point)} />
+            </div>
           </div>
-          <p className="mt-2 text-xs leading-relaxed text-muted">{mobile.width} × {mobile.height}，使用详情页的同一取景位置，窄屏会裁切更多画面。</p>
-        </details>
+        </div>
       </> : <p className="cover-crop-help">从旅程照片中选择封面，或填写上方封面图片地址，即可预览和调整取景。</p>}
     </div>
   </section>;

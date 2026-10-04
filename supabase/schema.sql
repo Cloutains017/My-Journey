@@ -31,6 +31,16 @@ create table trips (
         and (cover_hero_position->>'y')::numeric between 0 and 100
       else false end
   ),
+  cover_mobile_position jsonb constraint trips_mobile_position_valid check (
+    case when cover_mobile_position is null then true
+      when jsonb_typeof(cover_mobile_position) = 'object'
+        and jsonb_typeof(cover_mobile_position->'x') = 'number'
+        and jsonb_typeof(cover_mobile_position->'y') = 'number'
+        and cover_mobile_position - 'x' - 'y' = '{}'::jsonb
+      then (cover_mobile_position->>'x')::numeric between 0 and 100
+        and (cover_mobile_position->>'y')::numeric between 0 and 100
+      else false end
+  ),
   content text,
   photo_groups jsonb default '[]'::jsonb,
   rating int2 not null check (rating between 1 and 5),

@@ -92,24 +92,32 @@ test('real Next handlers enforce sessions, origin, rate limits and recoverable d
     assert.match(response.headers.get('set-cookie'),/HttpOnly/i);
     const authenticated = {Cookie:cookie,Origin:base,'Content-Type':'application/json'};
     const editable = { title: '本地测试', slug: 'local-test', date: '2026-01-01', location: '福州市', latitude: 1, longitude: 1, rating: 3, city_name: null, cover_image: 'https://images.test/cover.jpg', content: '正文开头' };
-    const presentation = { summary: '  暴雨后的城市  ', cover_card_position: { x: 10, y: 75 }, cover_hero_position: { x: 80, y: 20 } };
+    const presentation = { summary: '  暴雨后的城市  ', cover_card_position: { x: 10, y: 75 }, cover_hero_position: { x: 80, y: 20 }, cover_mobile_position: { x: 15, y: 85 } };
     response = await fetch(base+'/api/admin/trips', { method:'POST', headers:authenticated, body:JSON.stringify({ ...editable, slug:'editorial-create', ...presentation }) });
     assert.equal(response.status, 200, await response.clone().text());
     const created = await response.json();
     assert.equal(created.summary, '暴雨后的城市');
     assert.deepEqual(created.cover_card_position, { x:10, y:75 });
     assert.deepEqual(created.cover_hero_position, { x:80, y:20 });
+    assert.deepEqual(created.cover_mobile_position, { x:15, y:85 });
     await db.query('delete from trips where id=$1', [created.id]);
     const save = body => fetch(base+`/api/admin/trips/${id}`, { method:'PUT', headers:authenticated, body:JSON.stringify(body) });
     assert.equal((await save({ ...editable, ...presentation })).status, 200);
     assert.equal((await save({ ...editable, title:'兼容旧客户端' })).status, 200);
-    let stored = (await db.query('select summary,cover_card_position,cover_hero_position from trips where id=$1',[id])).rows[0];
-    assert.deepEqual(stored, { summary:'暴雨后的城市', cover_card_position:{ x:10,y:75 }, cover_hero_position:{ x:80,y:20 } });
+    let stored = (await db.query('select summary,cover_card_position,cover_hero_position,cover_mobile_position from trips where id=$1',[id])).rows[0];
+    assert.deepEqual(stored, { summary:'暴雨后的城市', cover_card_position:{ x:10,y:75 }, cover_hero_position:{ x:80,y:20 }, cover_mobile_position:{ x:15,y:85 } });
+    await db.query('update trips set cover_mobile_position=null where id=$1',[id]);
+    assert.equal((await save({ ...editable, cover_hero_position:{x:10,y:90} })).status,200);
+    assert.deepEqual((await db.query('select cover_hero_position,cover_mobile_position from trips where id=$1',[id])).rows[0], {
+      cover_hero_position:{x:10,y:90},cover_mobile_position:{x:80,y:20},
+    });
+    assert.equal((await save({ ...editable, ...presentation })).status,200);
     assert.equal((await save({ ...editable, summary:'山'.repeat(121) })).status, 400);
     assert.equal((await save({ ...editable, cover_hero_position:{x:-1,y:50} })).status, 400);
+    assert.equal((await save({ ...editable, cover_mobile_position:{x:50,y:101} })).status, 400);
     assert.equal((await save({ ...editable, cover_image:'https://images.test/new.jpg' })).status, 200);
-    stored = (await db.query('select cover_card_position,cover_hero_position from trips where id=$1',[id])).rows[0];
-    assert.deepEqual(stored, { cover_card_position:null, cover_hero_position:null });
+    stored = (await db.query('select cover_card_position,cover_hero_position,cover_mobile_position from trips where id=$1',[id])).rows[0];
+    assert.deepEqual(stored, { cover_card_position:null, cover_hero_position:null, cover_mobile_position:null });
     assert.equal((await save({ ...editable, ...presentation })).status, 200);
     assert.equal((await fetch(base+`/api/admin/trips/${id}`,{method:'DELETE',headers:{...authenticated,Origin:'https://evil.test'}})).status,401);
     for (const path of [`/trips/${id}`,`/photos/${id}`,`/votes/agreement/${id}`,`/votes/desire/${id}`]) {
@@ -119,8 +127,8 @@ test('real Next handlers enforce sessions, origin, rate limits and recoverable d
     assert.equal((await login('local-test-strong-password')).status,503);
     assert.equal((await fetch(base+`/api/admin/trips/${id}`,{method:'DELETE',headers:authenticated})).status,503);
     assert.equal((await db.query('select * from trips')).rows.length,1);
-    assert.deepEqual((await db.query('select summary,cover_card_position,cover_hero_position from trips where id=$1',[id])).rows[0], {
-      summary:'暴雨后的城市', cover_card_position:{x:10,y:75}, cover_hero_position:{x:80,y:20},
+    assert.deepEqual((await db.query('select summary,cover_card_position,cover_hero_position,cover_mobile_position from trips where id=$1',[id])).rows[0], {
+      summary:'暴雨后的城市', cover_card_position:{x:10,y:75}, cover_hero_position:{x:80,y:20}, cover_mobile_position:{x:15,y:85},
     });
     unavailable = false;
     response = await fetch(base+`/api/admin/trips/${id}`,{method:'DELETE',headers:authenticated});
@@ -130,8 +138,8 @@ test('real Next handlers enforce sessions, origin, rate limits and recoverable d
     response = await fetch(base+'/api/admin/recycle-bin',{method:'POST',headers:authenticated,body:JSON.stringify({id:archive})});
     assert.equal(response.status,200,await response.clone().text());
     assert.equal((await db.query('select * from trips')).rows.length,1);
-    assert.deepEqual((await db.query('select summary,cover_card_position,cover_hero_position from trips where id=$1',[id])).rows[0], {
-      summary:'暴雨后的城市', cover_card_position:{x:10,y:75}, cover_hero_position:{x:80,y:20},
+    assert.deepEqual((await db.query('select summary,cover_card_position,cover_hero_position,cover_mobile_position from trips where id=$1',[id])).rows[0], {
+      summary:'暴雨后的城市', cover_card_position:{x:10,y:75}, cover_hero_position:{x:80,y:20}, cover_mobile_position:{x:15,y:85},
     });
     for(let n=0;n<9;n++) assert.equal((await login('wrong')).status,401);
     assert.equal((await login('local-test-strong-password')).status,429);
