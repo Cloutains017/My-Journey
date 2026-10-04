@@ -499,6 +499,14 @@ a {
 .back-to-top:focus-visible, .photo-gallery-tile:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
 .trip-prose > p { line-height: 1.9; overflow-wrap: anywhere; }
 .photo-gallery-grid { column-gap: 10px; }
+.photo-gallery { scroll-margin-top: 168px; outline: none; }
+.photo-group-nav { position: sticky; top: 64px; z-index: 25; padding: 12px 0; margin-bottom: 24px; border-bottom: 1px solid var(--color-hairline); background: var(--color-canvas); }
+.photo-group-link { display: inline-flex; min-height: 44px; align-items: center; gap: 8px; flex-shrink: 0; padding: 8px 14px; border: 1px solid var(--color-hairline); border-radius: 10px; font-size: 13px; color: var(--color-ink); }
+.photo-group-link:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.photo-gallery-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding: 12px 0; }
+.photo-gallery-more { display: inline-flex; min-height: 44px; align-items: center; gap: 12px; padding: 8px 16px; border: 1px solid var(--color-hairline); border-radius: 10px; font-size: 13px; color: var(--color-primary); cursor: pointer; }
+.photo-gallery-more:hover { border-color: var(--color-primary); background: var(--color-surface-soft); }
+.photo-group-link:focus-visible, .photo-gallery-more:focus-visible, .photo-gallery-tile:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
 .photo-gallery-tile { margin-bottom: 10px; }
 .photo-gallery-tile .travel-image[data-image-state="loading"], .trip-card-media .travel-image[data-image-state="loading"] { opacity: 0; }
 @media (min-width: 640px) {
@@ -553,6 +561,7 @@ a {
 @keyframes check-draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
 @keyframes spinner-turn { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: no-preference) {
+  .photo-gallery-batch { animation: fade-in 220ms ease-out both; }
   .journey-result { animation: fade-in 220ms ease-out both; }
   .trip-hero-reveal { animation: fade-up 550ms cubic-bezier(.2,.7,.2,1) both; }
   .vote-success { animation: fade-up 280ms ease-out both; }

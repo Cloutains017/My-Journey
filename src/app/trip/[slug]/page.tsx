@@ -2,7 +2,7 @@ import JourneyLink from "@/components/JourneyLink";
 import TravelImage from "@/components/TravelImage";
 import { supabase } from "@/lib/supabase";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
-import PhotoGallery from "@/components/PhotoGallery";
+import PhotoAlbums from "@/components/PhotoAlbums";
 import { groupTripPhotos } from "@/lib/photo-groups";
 import AgreementVoteComponent from "@/components/AgreementVote";
 import DesireVoteComponent from "@/components/DesireVote";
@@ -115,9 +115,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
           </div>
         )}
 
-        {groupTripPhotos(t.photos || [], t.photo_groups).map(group => (
-          <PhotoGallery key={group.id} title={group.title} photos={group.photos} />
-        ))}
+        <PhotoAlbums groups={groupTripPhotos(t.photos || [], t.photo_groups)} />
         </div>
 
         <TripNavigation {...neighbours} />
