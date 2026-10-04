@@ -4,8 +4,7 @@ import { supabase } from "@/lib/supabase";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
 import PhotoAlbums from "@/components/PhotoAlbums";
 import { groupTripPhotos } from "@/lib/photo-groups";
-import AgreementVoteComponent from "@/components/AgreementVote";
-import DesireVoteComponent from "@/components/DesireVote";
+import TripFeedback from "@/components/TripFeedback";
 import VisitorComments from "@/components/VisitorComments";
 import RatingBadge from "@/components/RatingBadge";
 import ReadingProgress from "@/components/ReadingProgress";
@@ -80,7 +79,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
                 <time dateTime={t.date}>{t.date}</time>
                 {t.end_date && t.end_date !== t.date && <> — <time dateTime={t.end_date}>{t.end_date}</time></>}
               </p>
-              <div className="trip-hero-rating"><RatingBadge rating={t.rating} size="lg" /></div>
+              <div className="trip-hero-rating"><RatingBadge rating={t.rating} size="lg" explain /></div>
             </div>
           </div>
         </div>
@@ -116,8 +115,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         </div>
 
         <TripNavigation {...neighbours} />
-        <AgreementVoteComponent tripId={t.id} />
-        <DesireVoteComponent tripId={t.id} />
+        <TripFeedback key={t.id} tripId={t.id} rating={t.rating} />
         <VisitorComments agreementVotes={t.agreement_votes || []} desireVotes={t.desire_votes || []} />
       </article>
     </div>

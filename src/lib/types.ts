@@ -65,6 +65,14 @@ export const RATING_LABELS: Record<number, string> = {
   5: "夯",
 };
 
+export const RATING_DESCRIPTIONS: Record<number, string> = {
+  1: "体验不佳",
+  2: "中规中矩",
+  3: "值得一去",
+  4: "非常推荐",
+  5: "强烈推荐",
+};
+
 export const AGREEMENT_LABELS: Record<number, string> = {
   1: "非常认同",
   2: "认同",

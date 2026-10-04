@@ -46,12 +46,24 @@ export default function VisitorComments({
   );
   all.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
+  // Nicknames already identify one vote per kind within a trip.
+  const visitors = new Map<string, { nickname: string; time: string; ratings: typeof all; comments: Set<string> }>();
+  all.forEach(item => {
+    let visitor = visitors.get(item.nickname);
+    if (!visitor) {
+      visitor = { nickname: item.nickname, time: item.time, ratings: [], comments: new Set() };
+      visitors.set(item.nickname, visitor);
+    }
+    visitor.ratings.push(item);
+    if (item.comment) visitor.comments.add(item.comment);
+  });
+
   return (
     <div className="py-8 border-t border-hairline">
       <p className="text-xs uppercase tracking-[3px] text-muted-soft mb-6 font-medium font-sans">访客回声</p>
       <div className="flex flex-col divide-y divide-hairline-soft">
-        {all.map((item, i) => (
-          <div key={i} className="py-4 first:pt-0 last:pb-0">
+        {[...visitors.values()].map(item => (
+          <div key={item.nickname} className="py-4 first:pt-0 last:pb-0">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center flex-shrink-0 font-sans">
                 {item.nickname.charAt(0).toUpperCase()}
@@ -62,11 +74,13 @@ export default function VisitorComments({
                   <span className="text-[10px] text-muted-soft font-sans">{relativeTime(item.time)}</span>
                 </div>
               </div>
-              <span className={`text-xs px-2.5 py-1 rounded-full border font-medium flex-shrink-0 font-sans ${VOTE_COLORS[item.level]}`}>
-                {item.label}
-              </span>
             </div>
-            {item.comment && <p className="text-sm text-body leading-relaxed pl-11 font-sans">{item.comment}</p>}
+            <div className="flex flex-wrap gap-2 pl-11 mb-2">
+              {item.ratings.map(rating => <span key={rating.label} className={`text-xs px-2.5 py-1 rounded-full border font-medium flex-shrink-0 font-sans ${VOTE_COLORS[rating.level]}`}>
+                {rating.label}
+              </span>)}
+            </div>
+            {[...item.comments].map(comment => <p key={comment} className="text-sm text-body leading-relaxed pl-11 font-sans">{comment}</p>)}
           </div>
         ))}
       </div>

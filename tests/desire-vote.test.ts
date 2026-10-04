@@ -5,16 +5,14 @@ import { createRequire } from "node:module";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import { ACTIVE_VOTE_COLORS, VOTE_COLORS } from "../src/components/voteStyles.ts";
-import { AGREEMENT_LABELS, DESIRE_LABELS } from "../src/lib/types.ts";
+import { AGREEMENT_LABELS, DESIRE_LABELS, RATING_LABELS, RATING_DESCRIPTIONS } from "../src/lib/types.ts";
 
 const require = createRequire(import.meta.url);
 
 async function renderVote(
-  componentPath: string,
-  labels: Record<number, string>,
   selected: number | null,
 ): Promise<string> {
-  const source = await readFile(componentPath, "utf8");
+  const source = await readFile("src/components/TripFeedback.tsx", "utf8");
   const compiled = ts.transpileModule(source, {
     compilerOptions: {
       esModuleInterop: true,
@@ -28,21 +26,21 @@ async function renderVote(
   const reactWithInitialVote = {
     ...realReact,
     useState(initial: unknown) {
-      const value = stateIndex++ === 0 ? selected : initial;
+      const value = stateIndex++ === 0 ? { agreement: selected, desire: selected, nickname: "", comment: "" } : initial;
       return [value, () => undefined];
     },
   };
-  const compiledModule = { exports: {} as { default?: (props: { tripId: string }) => React.ReactNode } };
+  const compiledModule = { exports: {} as { default?: (props: { tripId: string; rating: number }) => React.ReactNode } };
   const localRequire = (id: string) => {
     if (id === "react") return reactWithInitialVote;
     if (id === "react/jsx-runtime") return require(id);
-    if (id === "@/lib/types") return { AGREEMENT_LABELS: labels, DESIRE_LABELS: labels };
+    if (id === "@/lib/types") return { AGREEMENT_LABELS, DESIRE_LABELS, RATING_LABELS, RATING_DESCRIPTIONS };
     if (id === "@/components/voteStyles") return { ACTIVE_VOTE_COLORS, VOTE_COLORS };
     throw new Error(`Unexpected component dependency: ${id}`);
   };
   new Function("require", "module", "exports", compiled)(localRequire, compiledModule, compiledModule.exports);
-  assert.ok(compiledModule.exports.default, `组件 ${componentPath} 应有默认导出`);
-  return renderToStaticMarkup(realReact.createElement(compiledModule.exports.default, { tripId: "trip-1" }));
+  assert.ok(compiledModule.exports.default);
+  return renderToStaticMarkup(realReact.createElement(compiledModule.exports.default, { tripId: "trip-1", rating: 4 }));
 }
 
 function buttonClass(html: string, label: string): string {
@@ -69,12 +67,11 @@ test("心动指数与认可度的五档按钮在普通和选中状态下逐项�
   ];
 
   for (const selected of [null, 1, 2, 3, 4, 5]) {
-    const desireHtml = await renderVote("src/components/DesireVote.tsx", DESIRE_LABELS, selected);
-    const agreementHtml = await renderVote("src/components/AgreementVote.tsx", AGREEMENT_LABELS, selected);
+    const html = await renderVote(selected);
     for (const [desireLabel, agreementLabel] of pairs) {
       assert.equal(
-        buttonClass(desireHtml, desireLabel),
-        buttonClass(agreementHtml, agreementLabel),
+        buttonClass(html, desireLabel),
+        buttonClass(html, agreementLabel),
         `${desireLabel} 应与 ${agreementLabel} 在选择 ${selected ?? "无"} 时同色`,
       );
     }

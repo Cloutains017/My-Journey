@@ -6,10 +6,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import { VOTE_COLORS } from "../src/components/voteStyles.ts";
 import { AGREEMENT_LABELS, DESIRE_LABELS } from "../src/lib/types.ts";
+import type { AgreementVote, DesireVote } from "../src/lib/types.ts";
 
 const require = createRequire(import.meta.url);
 
-async function renderVisitorComments(): Promise<string> {
+async function renderVisitorComments(custom?: { agreementVotes: AgreementVote[]; desireVotes: DesireVote[] }): Promise<string> {
   const source = await readFile("src/components/VisitorComments.tsx", "utf8");
   const compiled = ts.transpileModule(source, {
     compilerOptions: {
@@ -47,7 +48,7 @@ async function renderVisitorComments(): Promise<string> {
     created_at: createdAt,
   }));
   return renderToStaticMarkup(
-    require("react").createElement(compiledModule.exports.default, { agreementVotes, desireVotes }),
+    require("react").createElement(compiledModule.exports.default, custom || { agreementVotes, desireVotes }),
   );
 }
 
@@ -74,4 +75,18 @@ test("访客回声的评级标签不显示类型图标", async () => {
 
   assert.equal(html.includes("✓ "), false);
   assert.equal(html.includes("🔥 "), false);
+});
+
+test("共享昵称的两种评价并排展示，同一条留言只出现一次", async () => {
+  const row = { id: "a", trip_id: "trip-1", nickname: "同一旅人", comment: "共同留言", created_at: "2026-10-04T12:00:00Z" };
+  const html = await renderVisitorComments({ agreementVotes: [{ ...row, agreement: 2 }], desireVotes: [{ ...row, id: "d", desire_level: 1 }] });
+  assert.equal(html.split("同一旅人").length - 1, 1);
+  assert.equal(html.split("共同留言").length - 1, 1);
+  assert.ok(html.includes("认同")); assert.ok(html.includes("心驰神往"));
+});
+
+test("旧评价的不同留言保留，单独的评价仍正常展示", async () => {
+  const row = { id: "a", trip_id: "trip-1", nickname: "旅人", created_at: "2026-10-04T12:00:00Z" };
+  const html = await renderVisitorComments({ agreementVotes: [{ ...row, agreement: 2, comment: "认可留言" }], desireVotes: [{ ...row, id: "d", desire_level: 1, comment: "心动留言" }, { ...row, id: "other", nickname: "另一位旅人", desire_level: 3, comment: "单独留言" }] });
+  for (const message of ["认可留言", "心动留言", "单独留言", "另一位旅人"]) assert.ok(html.includes(message));
 });
