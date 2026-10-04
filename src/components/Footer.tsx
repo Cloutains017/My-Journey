@@ -17,6 +17,9 @@ export default function Footer() {
             <p className="text-[11px] text-muted-soft/60 font-sans">
               &copy; {new Date().getFullYear()} Cloutains
             </p>
+            <a href="https://hyperos.mi.com/font/zh/" className="text-[11px] text-muted underline underline-offset-4">
+              字体：MiSans
+            </a>
           </div>
         </div>
       </div>

@@ -105,7 +105,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {t.content && (
-          <div className="trip-prose mb-10 sm:mb-12">
+          <div className="trip-prose mb-14 sm:mb-20">
             {renderContent(t.content)}
           </div>
         )}

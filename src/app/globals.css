@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
-@import "@fontsource-variable/noto-sans-sc";
+@import "../../public/fonts/misans/fonts.css";
 
 @theme {
   /* Warm editorial palette */
@@ -41,10 +41,15 @@
   --color-text-muted: rgba(255, 255, 255, 0.3);
 
   /* Font families */
-  --font-display: "Cormorant Garamond", "EB Garamond", "Times New Roman", serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Cormorant Garamond", "EB Garamond", "Times New Roman", "MiSans", serif;
+  --font-sans: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", "Microsoft YaHei", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-journey-sans: "Noto Sans SC Variable", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-journey-sans: var(--font-sans);
+  /* MiSans's native axis: Regular 330, Medium 380, Demibold 450, Bold 630. */
+  --font-weight-normal: 330;
+  --font-weight-medium: 380;
+  --font-weight-semibold: 450;
+  --font-weight-bold: 630;
 }
 
 /* ── Base ── */
@@ -60,6 +65,7 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  font-weight: 330;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -117,13 +123,13 @@ h2 {
   color: #fff;
   max-width: 13em;
   font-family: var(--font-journey-sans);
-  font-size: clamp(2.25rem, 5.5vw, 4.5rem);
-  font-weight: 500;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
+  font-size: clamp(2.5rem, 5.5vw, 4.5rem);
+  font-weight: 450;
+  line-height: 1.35;
+  letter-spacing: 0;
   text-wrap: balance;
 }
-.trip-hero-location, .trip-hero-date { font-family: var(--font-journey-sans); font-size: 13px; line-height: 1.8; font-weight: 400; }
+.trip-hero-location, .trip-hero-date { font-family: var(--font-journey-sans); font-size: 13px; line-height: 1.8; font-weight: 330; }
 .trip-hero-location { max-width: 36em; letter-spacing: 0.025em; text-wrap: balance; }
 .trip-hero-date { font-variant-numeric: tabular-nums; letter-spacing: 0.035em; }
 
@@ -133,7 +139,7 @@ h2 {
   background: rgb(12 20 31 / 0.25);
   border-color: rgb(255 255 255 / 0.45);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 330;
   padding: 4px 12px;
 }
 
@@ -459,9 +465,9 @@ a {
 .dark {
   --color-canvas: #181715;
   --color-ink: #faf9f5;
-  --color-body: #a09d96;
-  --color-muted: #8e8b82;
-  --color-muted-soft: #6c6a64;
+  --color-body: #cbc7c0;
+  --color-muted: #aaa69f;
+  --color-muted-soft: #96928b;
   --color-hairline: rgba(255, 255, 255, 0.08);
   --color-hairline-soft: rgba(255, 255, 255, 0.05);
   --color-surface-soft: #1f1e1b;
@@ -523,23 +529,23 @@ a {
 .back-to-top:hover { color: var(--color-primary); border-color: var(--color-primary); }
 .back-to-top:focus-visible, .photo-gallery-tile:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
 .home-journal .font-sans, .home-journal .font-display, .home-journal h1, .trip-card { font-family: var(--font-journey-sans); }
-.home-journal h1 { font-size: clamp(28px, 4vw, 36px); line-height: 1.4; font-weight: 500; letter-spacing: 0; }
+.home-journal h1 { font-size: clamp(28px, 4vw, 36px); line-height: 1.4; font-weight: 450; letter-spacing: 0; }
 .home-journal {
-  --journal-card-title-size: 23px;
+  --journal-card-title-size: 1.5rem;
   --journal-card-gap: 22px;
   --journal-card-padding: 32px;
 }
-.education-card h3 { font-family: var(--font-journey-sans); font-weight: 500; font-size: 18px; line-height: 1.5; letter-spacing: 0; }
+.education-card h3 { font-family: var(--font-journey-sans); font-weight: 380; font-size: 18px; line-height: 1.5; letter-spacing: 0; }
 .trip-card-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--journal-card-gap); padding-block: var(--journal-card-padding); border-bottom: 1px solid var(--color-hairline-soft); }
 .trip-card-media { width: 100%; aspect-ratio: 4 / 3; border-radius: 6px; }
 .trip-card-copy { display: flex; flex-direction: column; min-width: 0; }
 .trip-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 20px; font-size: 12px; line-height: 1.6; letter-spacing: 0; }
-.trip-card-meta > span:last-child { font-weight: 400; }
-.trip-card-title { margin-bottom: 12px; font-family: var(--font-journey-sans); font-size: var(--journal-card-title-size); line-height: 1.4; font-weight: 500; letter-spacing: -0.015em; text-wrap: pretty; }
+.trip-card-meta > span:last-child { font-weight: 330; }
+.trip-card-title { margin-bottom: 12px; font-family: var(--font-journey-sans); font-size: var(--journal-card-title-size); line-height: 1.45; font-weight: 380; letter-spacing: 0; text-wrap: balance; }
 .trip-card:hover .trip-card-title, .trip-card:focus-visible .trip-card-title { color: var(--color-ink); }
-.trip-card-location { margin-bottom: 16px; font-size: 12px; line-height: 1.7; }
+.trip-card-location { margin-bottom: 14px; font-size: 13px; line-height: 1.7; }
 .trip-card-location svg { margin-top: 4px; }
-.trip-card-excerpt { font-size: 14px; line-height: 1.85; letter-spacing: 0; white-space: normal; }
+.trip-card-excerpt { font-size: 1rem; line-height: 1.85; letter-spacing: 0; white-space: normal; }
 .trip-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 18px; margin-top: auto; font-size: 12px; line-height: 1.6; }
 .trip-card-read { position: relative; display: inline-block; padding-bottom: 4px; }
 .trip-card-read::before, .trip-card-read::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 1px; background: currentColor; pointer-events: none; }
@@ -547,16 +553,17 @@ a {
 .trip-card-read::after { transform: scaleX(0); transform-origin: left; }
 .trip-card:focus-visible .trip-card-read::after, .trip-card:active .trip-card-read::after { transform: scaleX(1); }
 .trip-article, .trip-article .font-sans { font-family: var(--font-journey-sans); }
-.trip-prose { max-width: 34em; margin-inline: auto; font-size: 16px; font-weight: 400; line-height: 1.95; letter-spacing: 0.01em; color: var(--color-body); overflow-wrap: anywhere; }
+.trip-prose { max-width: 34em; margin-inline: auto; font-size: 1.0625rem; font-weight: 330; line-height: 1.9; letter-spacing: 0.025em; color: var(--color-body); overflow-wrap: anywhere; text-wrap: pretty; }
 .trip-prose > p { margin: 0; overflow-wrap: anywhere; }
 .trip-prose .prose-editorial { margin: 0; padding-left: 1.15em; font-family: var(--font-journey-sans); font-size: 1em; font-style: normal; line-height: inherit; letter-spacing: inherit; opacity: 1; }
-.trip-prose > :not(:first-child) { margin-top: 1.5em; }
-.trip-article .vote-form h3 { font-family: var(--font-journey-sans); font-size: 18px; font-weight: 600; line-height: 1.6; letter-spacing: 0; }
-.trip-article .trip-pagination-link .font-display { font-family: var(--font-journey-sans); font-size: 18px; font-weight: 600; line-height: 1.5; letter-spacing: 0; }
+.trip-prose > :not(:first-child) { margin-top: 1.25em; }
+.dark .trip-prose { line-height: 1.95; }
+.trip-article .vote-form h3 { font-family: var(--font-journey-sans); font-size: 18px; font-weight: 380; line-height: 1.6; letter-spacing: 0; }
+.trip-article .trip-pagination-link .font-display { font-family: var(--font-journey-sans); font-size: 18px; font-weight: 380; line-height: 1.5; letter-spacing: 0; }
 .trip-article .uppercase { letter-spacing: 0.08em; text-transform: none; }
-.photo-gallery-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 20px; font-family: var(--font-journey-sans); font-size: 18px; line-height: 1.5; font-weight: 600; letter-spacing: 0; color: var(--color-ink); }
+.photo-gallery-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 20px; font-family: var(--font-journey-sans); font-size: 1.125rem; line-height: 1.5; font-weight: 380; letter-spacing: 0.015em; color: var(--color-ink); }
 .photo-gallery-heading > span:first-child { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
-.photo-gallery-count { font-family: var(--font-journey-sans); font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--color-muted); font-variant-numeric: tabular-nums; }
+.photo-gallery-count { font-family: var(--font-journey-sans); font-size: 12px; font-weight: 330; letter-spacing: 0; color: var(--color-muted); font-variant-numeric: tabular-nums; }
 .photo-gallery-grid { column-gap: 10px; }
 .photo-gallery-batch + .photo-gallery-batch { margin-top: 24px; }
 .photo-gallery { scroll-margin-top: 168px; outline: none; }
@@ -568,10 +575,11 @@ a {
 .photo-gallery-more:hover { border-color: var(--color-primary); background: var(--color-surface-soft); }
 .photo-group-link:focus-visible, .photo-gallery-more:focus-visible, .photo-gallery-tile:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
 .photo-gallery-tile { margin-bottom: 10px; }
+.photo-gallery-caption span { font-size: 13px; line-height: 1.65; letter-spacing: 0.02em; }
 .photo-gallery-tile .travel-image[data-image-state="loading"], .trip-card-media .travel-image[data-image-state="loading"] { opacity: 0; }
 @media (min-width: 640px) {
   .education-card h3 { font-size: 20px; }
-  .trip-prose { font-size: 17px; }
+  .trip-prose { font-size: 1.125rem; }
   .trip-hero-location { font-size: 14px; }
   .photo-gallery-heading { font-size: 20px; }
   .photo-gallery-grid { column-gap: 12px; }
@@ -580,9 +588,10 @@ a {
   .back-to-top { right: 28px; bottom: 28px; }
 }
 @media (min-width: 768px) {
-  .home-journal { --journal-card-title-size: 28px; --journal-card-gap: 32px; --journal-card-padding: 40px; }
+  .home-journal { --journal-card-title-size: 1.875rem; --journal-card-gap: 32px; --journal-card-padding: 40px; }
   .trip-card-layout { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); }
   .trip-card-copy { padding-block: 2px; }
+  .trip-card-excerpt { font-size: 0.9375rem; }
   .trip-hero-layout { padding: 128px 48px; }
 }
 @media (hover: none) {
