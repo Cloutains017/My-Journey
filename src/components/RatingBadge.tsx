@@ -3,9 +3,9 @@ import { RATING_LABELS, RATING_DESCRIPTIONS } from "@/lib/types";
 const RATING_STYLES: Record<number, string> = {
   1: "bg-hairline text-muted border-hairline",
   2: "bg-hairline text-muted border-hairline",
-  3: "bg-accent-teal/10 text-accent-teal border-accent-teal/20",
-  4: "bg-accent-amber/10 text-accent-amber border-accent-amber/20",
-  5: "bg-primary/10 text-primary border-primary/20",
+  3: "bg-accent-teal/10 text-accent-teal-text border-accent-teal/20",
+  4: "bg-accent-amber/10 text-accent-amber-text border-accent-amber/20",
+  5: "bg-primary/10 text-primary-text border-primary/20",
 };
 
 export default function RatingBadge({ rating, size = "sm", explain = false }: { rating: number; size?: "sm" | "lg"; explain?: boolean }) {

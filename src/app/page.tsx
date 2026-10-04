@@ -63,7 +63,7 @@ export default async function HomePage() {
               Where I&apos;ve Been
             </p>
             <h1 className="font-display text-3xl sm:text-4xl font-normal tracking-[-0.5px] text-ink">
-              Cloutains <span className="text-muted-soft font-light">的旅程</span>
+              Cloutains <span className="text-muted-display font-light">的旅程</span>
             </h1>
             <p className="text-xs text-muted mt-1.5 tracking-wider font-sans">
               用脚步丈量世界

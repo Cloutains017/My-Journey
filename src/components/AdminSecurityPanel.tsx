@@ -88,7 +88,7 @@ export default function AdminSecurityPanel() {
         </div>
         <div className="flex items-center justify-end gap-3">
           {row.target === 'photos' && <label className="flex items-center gap-1.5 text-sm text-muted"><input type="checkbox" checked={selectedPhotos.includes(row.id)} disabled={busy !== null} onChange={event=>setSelectedPhotoIds(event.target.checked ? [...selectedPhotos, row.id] : selectedPhotos.filter(id => id !== row.id))} />选择</label>}
-          <button disabled={busy !== null} onClick={()=>void restore(row.id)} className="text-sm text-primary disabled:opacity-50">{busy===row.id?'恢复中…':'恢复'}</button>
+          <button disabled={busy !== null} onClick={()=>void restore(row.id)} className="text-sm text-primary-text disabled:opacity-50">{busy===row.id?'恢复中…':'恢复'}</button>
         </div>
       </div>)}
       <div className="flex gap-4 mt-4 text-sm">

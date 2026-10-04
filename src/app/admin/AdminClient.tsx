@@ -320,7 +320,7 @@ export default function AdminClient() {
             className="w-72 bg-canvas border border-hairline rounded-xl px-5 py-3 text-sm text-ink text-center placeholder:text-muted-soft outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
           />
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <button type="submit" className="px-10 py-3 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary-active transition-colors">
+          <button type="submit" className="px-10 py-3 bg-action text-on-primary rounded-xl text-sm font-semibold hover:bg-action-active transition-colors">
             进入后台
           </button>
         </form>
@@ -356,7 +356,7 @@ export default function AdminClient() {
       </aside>
 
       <main className="min-w-0 flex-1 p-4 sm:p-8">
-        {!editing && message && <p className="text-sm text-accent-teal font-medium mb-4">{message}</p>}
+        {!editing && message && <p className="text-sm text-accent-teal-text font-medium mb-4">{message}</p>}
         {!editing && error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
         {storageMode ? <StorageAdmin pendingCleanups={pendingCleanups} manualCleanups={manualCleanups} /> : educationMode ? <EducationAdmin /> : securityMode ? <AdminSecurityPanel /> : commentsMode ? (
@@ -374,7 +374,7 @@ export default function AdminClient() {
                 {mergeComments().map((item) => (
                   <div key={`${item.type}-${item.id}`} className="flex items-center gap-4 p-4 bg-surface-card rounded-xl border border-hairline-soft">
                     <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                      item.type === "agreement" ? "bg-accent-teal/10 text-accent-teal" : "bg-primary/10 text-primary"
+                      item.type === "agreement" ? "bg-accent-teal/10 text-accent-teal-text" : "bg-primary/10 text-primary-text"
                     }`}>
                       {item.type === "agreement" ? "✓" : "🔥"}
                     </span>
@@ -405,7 +405,7 @@ export default function AdminClient() {
                 <h2 className="text-xl font-bold text-ink">我的旅程</h2>
                 <p className="text-sm text-muted">共 {trips.length} 段旅程</p>
               </div>
-              <button onClick={() => { openEditor(emptyTrip); setCommentsMode(false); }} className="px-6 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:bg-primary-active transition-colors">
+              <button onClick={() => { openEditor(emptyTrip); setCommentsMode(false); }} className="px-6 py-2.5 bg-action text-on-primary rounded-lg text-sm font-semibold hover:bg-action-active transition-colors">
                 + 新建旅程
               </button>
             </div>
@@ -430,12 +430,12 @@ export default function AdminClient() {
             <div className="sticky top-[7.5rem] z-20 -mx-4 mb-5 flex items-center justify-between gap-3 border-b border-hairline bg-canvas/95 px-4 py-3 backdrop-blur-lg lg:top-16">
               <div className="min-w-0">
                 <h3 className="text-lg font-bold text-ink">{editing.id ? "编辑旅程" : "新建旅程"}</h3>
-                {message && <p role="status" className="truncate text-xs text-accent-teal">{message}</p>}
+                {message && <p role="status" className="truncate text-xs text-accent-teal-text">{message}</p>}
                 {error && <p role="alert" className="truncate text-xs text-red-500" title={error}>{error}</p>}
               </div>
               <div className="flex flex-shrink-0 items-center gap-2">
                 <button type="button" disabled={saving} onClick={() => openEditor(null)} className="rounded-lg border border-hairline bg-surface-card px-4 py-2 text-sm text-muted hover:text-ink disabled:opacity-50">取消</button>
-                <button type="submit" form="trip-editor-form" disabled={saving || deletingPhotos || uploading} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-active disabled:opacity-50">{saving ? "保存中…" : "保存全部"}</button>
+                <button type="submit" form="trip-editor-form" disabled={saving || deletingPhotos || uploading} className="rounded-lg bg-action px-4 py-2 text-sm font-semibold text-on-primary hover:bg-action-active disabled:opacity-50">{saving ? "保存中…" : "保存全部"}</button>
               </div>
             </div>
             <form id="trip-editor-form" onSubmit={handleSave} className="flex flex-col gap-5">
@@ -479,14 +479,14 @@ export default function AdminClient() {
                   <button type="button" onClick={() => setEditing({ ...editing, city_name: "" })}
                     className={`px-5 py-2.5 rounded-lg text-sm border transition-all ${
                       editing.city_name !== null && editing.city_name !== undefined
-                        ? "bg-accent-teal/10 border-accent-teal/30 text-accent-teal font-semibold"
+                        ? "bg-accent-teal/10 border-accent-teal/30 text-accent-teal-text font-semibold"
                         : "bg-surface-card border-hairline text-muted"
                     }`}
                   >🇨🇳 中国境内</button>
                   <button type="button" onClick={() => setEditing({ ...editing, city_name: null })}
                     className={`px-5 py-2.5 rounded-lg text-sm border transition-all ${
                       editing.city_name === null
-                        ? "bg-primary/10 border-primary/30 text-primary font-semibold"
+                        ? "bg-primary/10 border-primary/30 text-primary-text font-semibold"
                         : "bg-surface-card border-hairline text-muted"
                     }`}
                   >🌍 境外</button>
@@ -532,7 +532,7 @@ export default function AdminClient() {
                     <button key={v} type="button" onClick={() => setEditing({ ...editing, rating: v })}
                       className={`px-4 py-2 rounded-full text-sm border transition-all ${
                         editing.rating === v
-                          ? "bg-primary/15 border-primary/50 text-primary font-semibold"
+                          ? "bg-primary/15 border-primary/50 text-primary-text font-semibold"
                           : "bg-surface-card border-hairline text-muted"
                       }`}
                     >{RATING_LABELS[v]}</button>

@@ -14,7 +14,7 @@ export default function Footer() {
             <p className="font-display text-base text-muted-soft italic leading-relaxed">
               &ldquo;读万卷书<br />行万里路&rdquo;
             </p>
-            <p className="text-[11px] text-muted-soft/60 font-sans">
+            <p className="text-[11px] text-muted-soft font-sans">
               &copy; {new Date().getFullYear()} Cloutains
             </p>
             <a href="https://fontsource.org/fonts/noto-serif-sc" className="text-[11px] text-muted underline underline-offset-4">

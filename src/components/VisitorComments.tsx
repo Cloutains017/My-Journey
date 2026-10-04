@@ -65,7 +65,7 @@ export default function VisitorComments({
         {[...visitors.values()].map(item => (
           <div key={item.nickname} className="py-4 first:pt-0 last:pb-0">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center flex-shrink-0 font-sans">
+              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary-text text-xs font-semibold flex items-center justify-center flex-shrink-0 font-sans">
                 {item.nickname.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
