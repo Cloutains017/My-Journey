@@ -2,4 +2,6 @@
 .next
 node_modules
 backups
+.playwright-mcp
+*.tsbuildinfo
 .env*

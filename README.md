@@ -2,7 +2,7 @@
 
 > 用脚步丈量世界，用地图记录每一段旅程。
 
-一个个人旅行足迹全栈 Web 应用。首页以深色交互地图呈现足迹，城市区域按评分染色；时间线按年份组织旅程；详情页提供图文、照片画廊和访客互动。
+一个个人旅行足迹全栈 Web 应用。首页以交互地图呈现旅行与求学足迹，城市区域按评级染色；时间线按年份组织记录，支持关键词搜索和评级筛选；游记内页提供文字、照片画廊和访客互动。
 
 线上站点：[www.cloutains.top](https://www.cloutains.top)
 
@@ -10,23 +10,33 @@
 
 这是 Cloutains 的个人旅行档案：用地图、时间线、照片和文字记录每一段旅程。它服务于安静地回看、阅读和互动，不提供旅行预订、攻略分发或社交动态功能。
 
-界面以温暖、克制的编辑式排版呈现内容，强调地图、照片与文字本身。
+界面以摄影旅行刊物的方式呈现内容，强调图片与阅读节奏。全站文字统一使用思源宋体，包括导航、标题、正文、日期、数字、表单控件、地图弹窗和后台界面。
 
 ## 功能
 
-- 首页：交互地图、足迹统计、按年份排列的旅程时间线。
-- 旅程详情：杂志式封面、阅读进度、按组展示的瀑布流照片画廊与灯箱浏览。
+- 首页：交互地图、足迹统计、旅程卡片与求学记录；保留年份导览，支持按标题、城市和地点搜索，以及评级筛选。搜索状态保存在 URL 中，返回时间线时会保留；输入框在拼音组合输入结束后提交搜索词。
+- 旅程详情：摄影封面、图文正文、阅读进度、返回顶部和上一篇／下一篇导航。
+- 照片浏览：按相册分组，以原始宽高比展示照片；长相册每次显示 24 张，追加时保留已显示照片的位置。灯箱读取原图，支持键盘切换和关闭。
 - 访客互动：五档认可度、五档心动指数、昵称和留言。
-- 地图页：全屏浏览城市与相关旅程。
-- 管理后台：带限速的密码登录、旅程管理、照片批量上传与分组、批量选择删除、封面设置、回收站恢复与操作记录。
+- 地图页：全屏浏览城市、相关旅程和求学足迹，可从游记内页直接定位。
+- 管理后台：带限速的密码登录、旅程与求学记录管理、照片批量上传与分组、批量选择删除、封面设置、回收站恢复、操作记录和存储检查。
+- 显示与动效：浅色／深色模式、卡片反馈、封面文字入场和新照片批次过渡；尊重系统的减少动态效果设置。
+
+## 字体
+
+使用与字体对照中相同的思源宋体字形：`Noto Serif SC`，由 `@fontsource-variable/noto-serif-sc@5.2.10` 提供。Next.js 在构建时打包字体文件，由网站自己提供，浏览器按 Unicode 字符范围加载需要的 WOFF2 分片，不依赖运行时字体 CDN。
+
+正文与卡片标题使用常规字重 400，封面标题使用 500。正文在手机上为 17 px，较宽屏幕上为 18 px；完整字体来源及许可见 [字体说明](public/fonts/noto-serif/README.md) 和 [OFL 许可](public/fonts/noto-serif/LICENSE.txt)。
 
 ## 技术栈
 
 | 类别 | 技术 |
 | --- | --- |
 | 框架 | Next.js 16（App Router） |
+| 界面 | React 19 |
 | 语言 | TypeScript |
 | 样式 | Tailwind CSS 4 |
+| 字体 | 自托管思源宋体，可变字重与 Unicode 分片 |
 | 数据库 | Supabase（PostgreSQL） |
 | 图片存储 | Cloudflare R2（S3 兼容） |
 | 地图 | Leaflet 与高德底图 |
@@ -35,10 +45,18 @@
 
 ## 本地开发
 
-```bash
+使用 Node.js 22.18+ 或 24。安装依赖后，先配置环境变量与数据库，再启动服务：
+
+```powershell
 git clone https://github.com/Cloutains017/My-Journey.git
 cd My-Journey
-npm install
+npm ci
+Copy-Item .env.example .env.local
+```
+
+填写 `.env.local` 中的实际配置；新数据库按下方“数据库初始化与迁移”准备完成后，运行：
+
+```powershell
 npm run dev
 ```
 
@@ -48,8 +66,8 @@ npm run dev
 
 复制 `.env.example` 为 `.env.local`，填入项目实际配置：
 
-```bash
-copy .env.example .env.local
+```powershell
+Copy-Item .env.example .env.local
 ```
 
 | 变量 | 用途 |
@@ -70,6 +88,7 @@ copy .env.example .env.local
 | 命令 | 作用 |
 | --- | --- |
 | `npm run dev` | 启动本地开发服务 |
+| `npm run start` | 启动已构建的生产服务，需先运行 `npm run build` |
 | `npm run lint` | 运行 ESLint |
 | `npx tsc --noEmit` | 类型检查 |
 | `npm test` | 运行测试 |
@@ -91,10 +110,10 @@ copy .env.example .env.local
 - **登录防护**：登录次数由数据库原子计数；同一来源每 15 分钟最多 10 次，全站每 15 分钟最多 100 次，成功尝试也计数。限速或审计存储不可用时拒绝登录。
 - **会话与请求保护**：后台 Cookie 经过签名，并设置 `HttpOnly`、生产环境 `Secure` 和 `SameSite=Strict`；写操作核对同源 `Origin` 并拒绝跨站 Fetch Metadata。修改 `ADMIN_PASSWORD` 或独立的 `ADMIN_SESSION_SECRET` 后重新部署会使旧会话失效。
 - **数据库权限**：业务表启用 RLS；匿名和普通登录角色只有公开读取权限。回收站、登录限速与审计表仅服务端可访问，管理员 RPC 只授权 `service_role`。
-- **回收与恢复**：普通删除会在同一数据库事务中保存快照后移除公开记录。旅程快照包含关联照片和评论；恢复保留原 UUID，遇到冲突会整体取消，不覆盖现有数据。
-- **操作审计**：业务表新增、修改和删除由数据库触发器记录修改前后内容；登录成功与失败单独记录，但不保存密码、Cookie 或密钥。
+- **回收与恢复**：删除旅程、照片和访客投票时，会在同一数据库事务中保存快照后移除公开记录。旅程快照包含关联照片和评论；恢复保留原 UUID，遇到冲突会整体取消，不覆盖现有数据。求学记录目前直接删除，不进入回收站。
+- **操作审计**：旅程、照片、投票和城市边界表的新增、修改和删除由数据库触发器记录修改前后内容；登录成功与失败单独记录，但不保存密码、Cookie 或密钥。
 - **上传防护**：服务端生成不可预测的 R2 对象路径；只接受允许的图片类型和大小，并在写入照片记录前确认对象存在且属于对应旅程。
-- **备份校验**：本机备份包含业务表、回收站、审计数据和 R2 原图，带 SHA-256 清单；校验脚本会在内存 PostgreSQL 中恢复业务表并检查计数与外键约束。
+- **备份校验**：本机备份包含旅程、照片、两类投票、城市边界、回收站、审计数据和 R2 原图，带 SHA-256 清单；校验脚本会在内存 PostgreSQL 中恢复业务表并检查计数与外键约束。当前备份与恢复脚本尚未覆盖求学记录表 `education`。
 
 照片可逐张或批量移入回收站。若照片是当前封面，后台会同步清空封面引用。普通删除不会移除 R2 原图，因此仅移入回收站不等于私密擦除；回收站中的照片可在二次确认后永久删除，此操作会删除 R2 原图和回收站快照，无法恢复。
 
@@ -120,8 +139,9 @@ npm run r2:configure-cors
 
 ## 验证与测试
 
-- 使用 Node.js 22.18+ 或 24。
-- 本机服务启动后，可运行接口回归测试：
+- `npm test` 运行组件行为、数据处理、安全规则和备份恢复测试，并包含数据库不可用时的生产构建检查。未设置 `ADMIN_TEST_BASE_URL` 时，3 项需要本地服务的接口测试会跳过。
+- `npm test` 内的构建检查会写入 `.next/`，应与 `npm run build` 顺序执行；如需预览实际旅程数据，在测试完成后重新运行 `npm run build`。
+- 本机服务启动后，可额外运行接口回归测试。`ADMIN_TEST_BASE_URL` 只接受 `localhost` 或 `127.0.0.1`，端口应与实际本地服务一致：
 
   ```powershell
   $env:ADMIN_TEST_BASE_URL="http://127.0.0.1:3007"
@@ -138,9 +158,32 @@ npm run r2:configure-cors
 
 ## 部署
 
-项目部署在 Vercel。将环境变量同步到 Vercel 的 Production 环境后，从 `main` 分支推送即可触发部署。部署后通过线上站点检查首页、旅程详情、后台登录与图片上传。
+项目部署在 Vercel，`main` 分支的推送会触发生产部署。将实际环境变量配置到 Vercel 的 Production 环境，发布前依次运行：
 
-首次安装数据保护功能必须先备份，再在 Supabase 执行 `supabase/security.sql`，核对权限后部署应用。新项目先执行 `supabase/schema.sql` 再执行安全脚本。已有项目新增回收站照片永久删除功能时，执行 `supabase/migrations/20260922_purge_recycled_photos.sql`。启用照片分组前，在已有数据库执行 `supabase/migrations/20260924_photo_groups.sql`；当前生产库已于 2026-09-24 执行此迁移，其他环境仍需单独执行。安全表不向匿名或普通登录用户开放；新增管理员 RPC 仅授权 `service_role`。数据库迁移成功前不要发布依赖它的新后台，否则登录和回收站操作会安全地拒绝执行。
+```powershell
+npm run lint
+npm test
+npm run build
+```
+
+构建会预生成可读取到的旅程内页。数据库暂时不可用时构建仍可完成；因此发布前还要核对实际旅程数据，不能只看构建是否成功。部署完成后检查首页、旅程内页、地图定位、字体与图片加载；后台操作需登录后验证。
+
+`.vercelignore` 排除本地截图和检测报告、备份、构建目录、依赖目录、环境文件及 TypeScript 缓存；这些本机文件不随手动部署上传。
+
+### 数据库初始化与迁移
+
+新项目先执行 [supabase/schema.sql](supabase/schema.sql)，再执行 [supabase/security.sql](supabase/security.sql)。当前初始化脚本已经包含照片分组、求学记录、权限和回收站永久删除 RPC；不要在新库上重复创建求学表。
+
+已有项目先备份，再根据尚未应用的功能执行对应迁移：
+
+| 功能 | 迁移 |
+| --- | --- |
+| 回收站照片永久删除 | `supabase/migrations/20260922_purge_recycled_photos.sql` |
+| 照片分组 | `supabase/migrations/20260924_photo_groups.sql` |
+| 求学记录 | `supabase/migrations/20260929_education.sql` |
+| 求学表公开角色只读权限 | `supabase/migrations/20260929_education_read_only_grants.sql` |
+
+首次启用数据保护功能时还需执行 `supabase/security.sql`。各环境分别确认迁移和权限后再发布依赖它们的后台；安全表仅向服务端开放，管理员 RPC 仅授权 `service_role`。
 
 `R2_CORS_ALLOWED_ORIGINS` 仅被本地维护脚本读取，不需要配置为 Vercel 运行时环境变量；需要更改桶的 CORS 时，在本地执行相应命令即可。
 
@@ -162,9 +205,13 @@ scripts/
 supabase/schema.sql          # 数据库结构
 supabase/security.sql        # 权限、限速、审计、回收站与恢复
 public/data/city-boundaries.json # 城市边界静态数据
-tests/                       # 接口与组件行为测试
+public/fonts/noto-serif/     # 当前字体来源说明与 OFL 许可
+tests/                       # 接口、组件行为、数据库与备份恢复测试
+docs/                        # 安全实施记录、备份与恢复使用说明
 ```
 
 ## 许可
 
 MIT
+
+字体另遵守 SIL Open Font License 1.1，许可随项目保存在 `public/fonts/noto-serif/LICENSE.txt`。
