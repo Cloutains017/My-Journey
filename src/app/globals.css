@@ -541,8 +541,11 @@ a {
 .trip-card-location svg { margin-top: 4px; }
 .trip-card-excerpt { font-size: 14px; line-height: 1.85; letter-spacing: 0; white-space: normal; }
 .trip-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 18px; margin-top: auto; font-size: 12px; line-height: 1.6; }
-.trip-card-read { text-decoration: underline; text-underline-offset: 5px; text-decoration-color: var(--color-hairline); transition: text-decoration-color 180ms ease; }
-.trip-card:hover .trip-card-read, .trip-card:focus-visible .trip-card-read { text-decoration-color: var(--color-ink); }
+.trip-card-read { position: relative; display: inline-block; padding-bottom: 4px; }
+.trip-card-read::before, .trip-card-read::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 1px; background: currentColor; pointer-events: none; }
+.trip-card-read::before { opacity: .2; }
+.trip-card-read::after { transform: scaleX(0); transform-origin: left; }
+.trip-card:focus-visible .trip-card-read::after, .trip-card:active .trip-card-read::after { transform: scaleX(1); }
 .trip-article, .trip-article .font-sans { font-family: var(--font-journey-sans); }
 .trip-prose { max-width: 34em; margin-inline: auto; font-size: 16px; font-weight: 400; line-height: 1.95; letter-spacing: 0.01em; color: var(--color-body); overflow-wrap: anywhere; }
 .trip-prose > p { margin: 0; overflow-wrap: anywhere; }
@@ -624,10 +627,20 @@ a {
 @keyframes lightbox-photo-in { from { opacity: 0; transform: translateX(var(--photo-enter-x, 0px)); } to { opacity: 1; transform: translateX(0); } }
 @keyframes check-draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
 @keyframes spinner-turn { to { transform: rotate(360deg); } }
+@keyframes journal-hero-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes journal-batch-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (hover: hover) and (pointer: fine) {
+  .trip-card:hover .trip-card-read::after { transform: scaleX(1); }
+}
 @media (prefers-reduced-motion: no-preference) {
-  .photo-gallery-batch { animation: fade-in 220ms ease-out both; }
-  .journey-result { animation: fade-in 220ms ease-out both; }
-  .trip-hero-reveal { animation: fade-up 550ms cubic-bezier(.2,.7,.2,1) both; }
+  .trip-card-image { transition: opacity 220ms ease-out; }
+  .trip-card-read::after { transition: transform 240ms cubic-bezier(.2,.7,.2,1); }
+  .trip-hero-copy { animation: journal-hero-in 500ms cubic-bezier(.2,.7,.2,1) both; }
+  .photo-gallery-batch:not(:first-child) { animation: journal-batch-in 260ms cubic-bezier(.2,.7,.2,1) both; }
+  .photo-gallery-more, .photo-group-link { transition: transform 160ms ease-out; }
+  .photo-gallery-more:active, .photo-group-link:active { transform: scale(.98); }
+  .photo-gallery-more > span, .trip-read-cue > svg { transition: transform 200ms ease-out; }
+  .photo-gallery-more:focus-visible > span, .trip-read-cue:focus-visible > svg { transform: translateY(3px); }
   .vote-success { animation: fade-up 280ms ease-out both; }
   .vote-success-check path { stroke-dasharray: 24; animation: check-draw 350ms ease-out both; }
   .vote-form button, .lightbox-control { transition: transform 160ms ease, background 180ms ease, border-color 180ms ease; }
@@ -637,6 +650,11 @@ a {
   .lightbox-photo[data-direction="1"] { --photo-enter-x: 10px; }
   .lightbox-photo[data-direction="-1"] { --photo-enter-x: -10px; }
   .lightbox-spinner { animation: spinner-turn 800ms linear infinite; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .trip-card-image { transition: opacity 220ms ease-out, transform 480ms cubic-bezier(.2,.7,.2,1); }
+  .trip-card:hover .trip-card-image { transform: scale(1.025); }
+  .photo-gallery-more:hover > span, .trip-read-cue:hover > svg { transform: translateY(3px); }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

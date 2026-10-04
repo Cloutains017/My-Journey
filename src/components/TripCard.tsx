@@ -18,7 +18,7 @@ export default function TripCard({ trip, photoCount }: { trip: Trip; photoCount:
       <article className="trip-card-layout">
         <div className="trip-card-media relative overflow-hidden bg-surface-cream-strong">
           {trip.cover_image ? (
-            <TravelImage src={trip.cover_image} alt={trip.title} fill sizes="(max-width: 767px) calc(100vw - 40px), (max-width: 1023px) 40vw, 420px" loading="lazy" className="object-cover motion-safe:group-hover:scale-[1.02] transition-[opacity,transform] duration-500 ease-out" />
+            <TravelImage src={trip.cover_image} alt={trip.title} fill sizes="(max-width: 767px) calc(100vw - 40px), (max-width: 1023px) 40vw, 420px" loading="lazy" className="trip-card-image object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-surface-cream-strong text-2xl">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2L2 22h20L12 2z" opacity="0.3" /></svg>
