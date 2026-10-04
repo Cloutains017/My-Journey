@@ -26,8 +26,9 @@ export default function PhotoGallery({ photos, title = "旅途影像", id }: { p
 
   return (
     <section id={id} tabIndex={-1} aria-label={`${title}照片`} className="photo-gallery mb-12">
-      <h2 className="text-xs uppercase tracking-[3px] text-muted-soft mb-5 font-medium font-sans">
-        {title} · {photos.length} Photos
+      <h2 className="photo-gallery-heading">
+        <span>{title}</span>
+        <span className="photo-gallery-count">{photos.length} 张照片</span>
       </h2>
       <div id={gridId}>
         {Array.from({ length: Math.ceil(shown / BATCH_SIZE) }, (_, batch) => (

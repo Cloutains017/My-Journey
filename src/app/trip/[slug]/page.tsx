@@ -37,17 +37,8 @@ function renderContent(content: string) {
       );
     }
 
-    // First paragraph gets drop-cap
-    if (i === 0) {
-      return (
-        <p key={i} className="drop-cap text-base text-body leading-relaxed font-sans">
-          {trimmed}
-        </p>
-      );
-    }
-
     return (
-      <p key={i} className="text-base text-body leading-relaxed font-sans">
+      <p key={i}>
         {trimmed}
       </p>
     );
@@ -77,11 +68,11 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         )}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(12,20,31,0.56)_0%,rgba(12,20,31,0.28)_28%,rgba(12,20,31,0.56)_72%,rgba(12,20,31,0.7)_100%)]" aria-hidden="true" />
         <div className="flex min-h-[100svh] flex-col items-center justify-center px-6 pb-16 pt-24 text-center">
-          {t.location && <p className="trip-hero-reveal mb-6 text-xs font-medium tracking-[0.28em] text-white/85 sm:text-sm">{t.location}</p>}
-          <h1 className="trip-hero-reveal trip-hero-title max-w-5xl break-words font-display text-[clamp(3rem,7vw,6rem)] leading-[1.12] font-normal tracking-[0.04em] text-balance drop-shadow-lg" style={{ animationDelay: "80ms" }}>
+          {t.location && <p className="trip-hero-reveal trip-hero-location mb-5 text-white/85">{t.location}</p>}
+          <h1 className="trip-hero-reveal trip-hero-title break-words drop-shadow-lg" style={{ animationDelay: "80ms" }}>
             {t.title}
           </h1>
-          <p className="trip-hero-reveal mt-7 text-sm font-medium tracking-[0.2em] text-white/90" style={{ animationDelay: "160ms" }}>
+          <p className="trip-hero-reveal trip-hero-date mt-6 text-white/90" style={{ animationDelay: "160ms" }}>
             <time dateTime={t.date}>{t.date}</time>
             {t.end_date && t.end_date !== t.date && <> — <time dateTime={t.end_date}>{t.end_date}</time></>}
           </p>
@@ -93,7 +84,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         </a>
       </header>
 
-      <article id="trip-content" className="max-w-3xl mx-auto scroll-mt-24 px-5 py-8 sm:px-8 sm:py-12">
+      <article id="trip-content" className="trip-article max-w-3xl mx-auto scroll-mt-24 px-5 py-8 sm:px-8 sm:py-12">
         <div id="trip-reading">
         {/* Back button */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-2 sm:mb-8">
@@ -110,7 +101,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {t.content && (
-          <div className="trip-prose space-y-5 mb-10 sm:mb-12">
+          <div className="trip-prose mb-10 sm:mb-12">
             {renderContent(t.content)}
           </div>
         )}
