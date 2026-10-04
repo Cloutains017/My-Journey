@@ -5,11 +5,13 @@ import TravelImage from "@/components/TravelImage";
 import { makePhotoVariants } from "@/lib/browser-photo-variants";
 import AdminSecurityPanel from "@/components/AdminSecurityPanel";
 import EducationAdmin from "@/components/EducationAdmin";
+import StorageAdmin from '@/components/StorageAdmin';
 import PhotoGroupEditor from "@/components/PhotoGroupEditor";
 import { RATING_LABELS, AGREEMENT_LABELS, DESIRE_LABELS, formatDateRange } from "@/lib/types";
 import type { Trip, Photo, AgreementVote, DesireVote } from "@/lib/types";
 import { deletePhotos } from "@/lib/photo-batch-delete";
 import { assignPhotosToGroup, type PhotoGroup } from "@/lib/photo-groups";
+import { uploadPhoto, readPendingUploadCleanups, rememberUploadCleanup, retryUploadCleanups, finishUploadCleanupRetry } from '@/lib/photo-upload';
 
 export default function AdminClient() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -24,9 +26,13 @@ export default function AdminClient() {
   const [message, setMessage] = useState("");
   const [photoRows, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState(false);
+  const uploadingRef = useRef(false);
   const [commentsMode, setCommentsMode] = useState(false);
   const [educationMode, setEducationMode] = useState(false);
   const [securityMode, setSecurityMode] = useState(false);
+  const [storageMode, setStorageMode] = useState(false);
+  const [pendingCleanups, setPendingCleanups] = useState(0);
+  const [manualCleanups, setManualCleanups] = useState(0);
   const [comments, setComments] = useState<{ agreements: (AgreementVote & { trips?: { title: string } | null })[], desires: (DesireVote & { trips?: { title: string } | null })[] }>({ agreements: [], desires: [] });
   const photos = photoRows.filter((photo) => photo.trip_id === editing?.id);
   const editingId = editing?.id;
@@ -37,6 +43,32 @@ export default function AdminClient() {
   const activePreviewIndex = previewIndex === null || photos.length === 0 ? null : previewIndex % photos.length;
   const activePreviewPhoto = activePreviewIndex === null ? null : photos[activePreviewIndex];
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    let cancelled = false;
+    let running = false;
+    async function retry() {
+      if (running || cancelled || uploadingRef.current) return;
+      running = true;
+      try {
+        const attempted = readPendingUploadCleanups(localStorage);
+        if (attempted.length) {
+          const remaining = await retryUploadCleanups(attempted);
+          finishUploadCleanupRetry(localStorage, attempted, remaining);
+        }
+        if (!cancelled) {
+          const pending = readPendingUploadCleanups(localStorage);
+          setPendingCleanups(pending.filter(entry => !entry.manualRequired).length);
+          setManualCleanups(pending.filter(entry => entry.manualRequired).length);
+        }
+      } catch { /* Unreachable storage stays visible to the manual storage scan. */ }
+      finally { running = false; }
+    }
+    void retry();
+    const interval = window.setInterval(() => void retry(), 60_000);
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, [authenticated]);
 
   useEffect(() => {
     if (previewIndex === null || photos.length === 0) return;
@@ -164,6 +196,7 @@ export default function AdminClient() {
     const files = e.target.files;
     if (!files || files.length === 0 || !editing?.id) return;
     setUploading(true);
+    uploadingRef.current = true;
     setError("");
 
     let uploadedCount = 0;
@@ -171,51 +204,21 @@ export default function AdminClient() {
       for (const file of Array.from(files)) {
         if (file.size > 50 * 1024 * 1024) throw new Error("单张照片不能超过 50 MB");
         const variants = await makePhotoVariants(file);
-        const fileName = `${Date.now()}-${file.name}`;
-
-        // 1. 获取签名 URL
-        const presignRes = await fetch("/api/admin/photos/presign", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tripId: editing.id, fileName, contentType: file.type }),
+        const remember = (entry: Parameters<typeof rememberUploadCleanup>[1]) => {
+          rememberUploadCleanup(localStorage, entry);
+          const pending = readPendingUploadCleanups(localStorage);
+          setPendingCleanups(pending.filter(entry => !entry.manualRequired).length);
+          setManualCleanups(pending.filter(entry => entry.manualRequired).length);
+        };
+        await uploadPhoto(editing.id!, file, variants, remember, fetch, {
+          started: remember,
+          finished: cleanupToken => {
+            finishUploadCleanupRetry(localStorage, [{ cleanupToken, registrationAttempted: true }], []);
+            const pending = readPendingUploadCleanups(localStorage);
+            setPendingCleanups(pending.filter(entry => !entry.manualRequired).length);
+            setManualCleanups(pending.filter(entry => entry.manualRequired).length);
+          },
         });
-        if (!presignRes.ok) {
-          const err = await presignRes.json();
-          throw new Error(err.error || "获取上传凭证失败");
-        }
-        const { presignedUrl, thumbPresignedUrl, heroPresignedUrl, publicUrl } = await presignRes.json();
-
-        // 2. 直传 R2
-        const uploadRes = await fetch(presignedUrl, {
-          method: "PUT",
-          body: file,
-          headers: { "Content-Type": file.type },
-        });
-        if (!uploadRes.ok) {
-          throw new Error(`上传失败: ${uploadRes.status}`);
-        }
-        for (const [url, blob] of [
-          [thumbPresignedUrl, variants.thumb],
-          [heroPresignedUrl, variants.hero],
-        ] as const) {
-          const variantRes = await fetch(url, {
-            method: "PUT",
-            body: blob,
-            headers: { "Content-Type": "image/webp" },
-          });
-          if (!variantRes.ok) throw new Error(`缩略图上传失败: ${variantRes.status}`);
-        }
-        // Save each completed photo before starting the next one, so a later
-        // failure does not hide successfully uploaded photos from the gallery.
-        const registerRes = await fetch("/api/admin/photos/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tripId: editing.id, urls: [publicUrl] }),
-        });
-        if (!registerRes.ok) {
-          const err = await registerRes.json();
-          throw new Error(err.error || "注册照片失败");
-        }
         uploadedCount++;
       }
 
@@ -224,14 +227,11 @@ export default function AdminClient() {
       const reason = err instanceof Error ? err.message : "上传失败";
       setError(uploadedCount ? `${reason}；已保存 ${uploadedCount} 张照片` : reason);
     }
-    if (uploadedCount) {
-      try {
-        await fetchPhotos(editing.id);
-      } catch {
-        setError("照片已保存，但列表刷新失败，请重新打开旅程查看");
-      }
-    }
+    // A lost registration response can still have saved a photo. Refresh even after failure.
+    try { await fetchPhotos(editing.id); }
+    catch { setError(previous => previous || "照片列表刷新失败，请重新打开旅程查看"); }
     setUploading(false);
+    uploadingRef.current = false;
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -329,22 +329,23 @@ export default function AdminClient() {
       <aside className="sticky top-16 z-30 w-full flex-shrink-0 border-b border-hairline bg-canvas/95 px-4 py-3 backdrop-blur-lg lg:top-20 lg:w-52 lg:self-start lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-6">
         <p className="hidden text-sm font-bold text-ink lg:mb-6 lg:block">📋 管理面板</p>
         <nav aria-label="管理面板" className="flex gap-4 overflow-x-auto whitespace-nowrap text-sm lg:flex-col lg:overflow-visible">
-          <button onClick={() => { setSecurityMode(false); setEducationMode(false); openEditor(null); setMessage(""); setCommentsMode(false); fetchTrips(); }} className={`text-left transition-colors ${!commentsMode && !securityMode && !educationMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setStorageMode(false); setSecurityMode(false); setEducationMode(false); openEditor(null); setMessage(""); setCommentsMode(false); fetchTrips(); }} className={`text-left transition-colors ${!commentsMode && !securityMode && !educationMode && !storageMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             旅程管理
           </button>
-          <button onClick={() => { setEducationMode(true); setSecurityMode(false); setCommentsMode(false); openEditor(null); setError(""); setMessage(""); }} className={`text-left transition-colors ${educationMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>求学足迹</button>
-          <button onClick={() => { setEducationMode(false); setSecurityMode(false); openEditor(null); setCommentsMode(true); setMessage(""); fetchComments(); }} className={`text-left transition-colors ${commentsMode && !securityMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
+          <button onClick={() => { setStorageMode(false); setEducationMode(true); setSecurityMode(false); setCommentsMode(false); openEditor(null); setError(""); setMessage(""); }} className={`text-left transition-colors ${educationMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>求学足迹</button>
+          <button onClick={() => { setStorageMode(false); setEducationMode(false); setSecurityMode(false); openEditor(null); setCommentsMode(true); setMessage(""); fetchComments(); }} className={`text-left transition-colors ${commentsMode && !securityMode && !storageMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>
             评论管理
           </button>
-          <button onClick={() => { setEducationMode(false); setSecurityMode(false); openEditor(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
+          <button onClick={() => { setStorageMode(false); setEducationMode(false); setSecurityMode(false); openEditor(emptyTrip); setCommentsMode(false); }} className="text-left text-muted hover:text-ink transition-colors">
             新建旅程
           </button>
-          <button title="回收站与操作记录" onClick={() => { setEducationMode(false); setSecurityMode(true); openEditor(null); setMessage(""); setError(""); }} className={`text-left ${securityMode ? "text-ink font-semibold" : "text-muted"}`}>回收记录</button>
+          <button title="回收站与操作记录" onClick={() => { setStorageMode(false); setCommentsMode(false); setEducationMode(false); setSecurityMode(true); openEditor(null); setMessage(""); setError(""); }} className={`text-left ${securityMode ? "text-ink font-semibold" : "text-muted"}`}>回收记录</button>
+          <button onClick={() => { setStorageMode(true); setEducationMode(false); setSecurityMode(false); setCommentsMode(false); openEditor(null); setMessage(""); setError(""); }} className={`text-left ${storageMode ? "text-ink font-semibold" : "text-muted hover:text-ink"}`}>存储检查</button>
           <button onClick={async () => {
             try {
               const res = await fetch("/api/admin/auth", { method: "DELETE" });
               if (!res.ok) throw new Error();
-              setAuthenticated(false); openEditor(null); setPhotos([]); setTrips([]); setError(""); setMessage(""); setSecurityMode(false);
+              setAuthenticated(false); openEditor(null); setPhotos([]); setTrips([]); setError(""); setMessage(""); setSecurityMode(false); setStorageMode(false);
             } catch { setError("退出失败，请重试"); }
           }} className="text-left text-muted">退出登录</button>
         </nav>
@@ -354,7 +355,7 @@ export default function AdminClient() {
         {!editing && message && <p className="text-sm text-accent-teal font-medium mb-4">{message}</p>}
         {!editing && error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
-        {educationMode ? <EducationAdmin /> : securityMode ? <AdminSecurityPanel /> : commentsMode ? (
+        {storageMode ? <StorageAdmin pendingCleanups={pendingCleanups} manualCleanups={manualCleanups} /> : educationMode ? <EducationAdmin /> : securityMode ? <AdminSecurityPanel /> : commentsMode ? (
           <>
             <div className="flex justify-between items-center mb-6">
               <div>

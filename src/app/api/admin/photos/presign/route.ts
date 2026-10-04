@@ -1,9 +1,10 @@
 import { r2PresignUpload } from "@/lib/r2";
 import { NextResponse } from "next/server";
-import { checkAuth } from "@/lib/admin-auth";
+import { adminSessionConfig, checkAuth } from "@/lib/admin-auth";
 import { createPhotoKey } from "@/lib/admin-security";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { photoVariantKey } from "@/lib/photo-variants";
+import { createUploadCleanupToken } from '@/lib/upload-cleanup';
 
 const PUBLIC_URL = process.env.CLOUDFLARE_R2_PUBLIC_URL!;
 
@@ -23,5 +24,6 @@ export async function POST(request: Request) {
     r2PresignUpload(photoVariantKey(key, "thumb"), "image/webp"),
     r2PresignUpload(photoVariantKey(key, "hero"), "image/webp"),
   ]);
-  return NextResponse.json({ presignedUrl, thumbPresignedUrl, heroPresignedUrl, key, publicUrl: `${PUBLIC_URL}/${key}` });
+  const cleanupToken = createUploadCleanupToken(key, adminSessionConfig());
+  return NextResponse.json({ presignedUrl, thumbPresignedUrl, heroPresignedUrl, cleanupToken, key, publicUrl: `${PUBLIC_URL}/${key}` });
 }

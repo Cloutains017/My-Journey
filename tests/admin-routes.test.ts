@@ -17,7 +17,7 @@ test("every admin data route rejects the legacy forged cookie before processing 
     ["GET", "/education"], ["POST", "/education"], ["PUT", `/education/${id}`], ["DELETE", `/education/${id}`],
     ["PUT", `/trips/${id}/photo-groups`],
     ["GET", "/votes"], ["DELETE", `/votes/agreement/${id}`], ["DELETE", `/votes/desire/${id}`],
-    ["POST", "/photos/presign"], ["POST", "/photos/register"],
+    ["POST", "/photos/presign"], ["POST", "/photos/register"], ["POST", "/photos/cleanup"], ["GET", "/storage"],
     ["DELETE", `/photos/${id}`], ["POST", "/city-boundary"],
   ];
   for (const [method, path] of routes) {

@@ -1,5 +1,6 @@
-import { DeleteObjectCommand, S3Client, HeadObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, S3Client, HeadObjectCommand, PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import type { StorageObject } from './storage-audit';
 
 function getR2Client(): S3Client {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -26,6 +27,22 @@ export async function r2PhotoInfo(key: string) {
 
 export async function r2Delete(key: string) {
   await getR2Client().send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+}
+
+export async function r2ListObjects(): Promise<StorageObject[]> {
+  const client = getR2Client();
+  const objects: StorageObject[] = [];
+  let token: string | undefined;
+  do {
+    const page = await client.send(new ListObjectsV2Command({ Bucket: BUCKET, ContinuationToken: token }));
+    for (const object of page.Contents || []) {
+      if (!object.Key || object.Size === undefined) throw new Error('存储清单不完整');
+      objects.push({ key: object.Key, size: object.Size, lastModified: object.LastModified?.toISOString() ?? null });
+    }
+    token = page.NextContinuationToken;
+    if (page.IsTruncated && !token) throw new Error('存储清单读取中断');
+  } while (token);
+  return objects;
 }
 
 export function r2KeyFromPublicUrl(url: string): string {
