@@ -138,17 +138,7 @@ h2 {
 .cover-preview-image { pointer-events: none; }
 .cover-preview-status { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; background: var(--color-canvas); color: var(--color-muted); font-size: 13px; cursor: default; }
 .cover-preview-status button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--color-hairline); border-radius: 8px; color: var(--color-ink); cursor: pointer; }
-.cover-crop-controls { display: grid; grid-template-columns: repeat(3,48px); grid-template-rows: repeat(3,48px); gap: 4px; width: fit-content; margin: 16px auto 0; padding: 10px; border: 1px solid var(--color-hairline); border-radius: 22px; background: var(--color-surface-soft); }
-.cover-crop-controls button { display: grid; place-items: center; border: 1px solid var(--color-hairline); border-radius: 10px; color: var(--color-ink); background: var(--color-canvas); box-shadow: 0 3px 0 var(--color-hairline); font-family: var(--font-sans); font-size: 24px; line-height: 1; cursor: pointer; }
-.cover-crop-controls button:hover:not(:disabled) { color: var(--color-primary); border-color: var(--color-primary); }
-.cover-crop-controls button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--color-hairline); }
-.cover-crop-controls .cover-control-up { grid-area: 1 / 2; border-radius: 14px 14px 6px 6px; }
-.cover-crop-controls .cover-control-left { grid-area: 2 / 1; border-radius: 14px 6px 6px 14px; }
-.cover-crop-controls .cover-control-center { grid-area: 2 / 2; border-radius: 50%; color: var(--color-primary); font-size: 12px; font-weight: 600; }
-.cover-crop-controls .cover-control-right { grid-area: 2 / 3; border-radius: 6px 14px 14px 6px; }
-.cover-crop-controls .cover-control-down { grid-area: 3 / 2; border-radius: 6px 6px 14px 14px; }
-.cover-crop-controls button:disabled { cursor: default; opacity: .5; }
-.cover-crop-controls button:focus-visible, .cover-preview-status button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.cover-preview-status button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .cover-crop-help { font-size: 13px; line-height: 1.8; color: var(--color-muted); }
 .cover-desktop-preview { height: auto; border-radius: 10px; container-type: inline-size; }
 .cover-hero-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg,rgba(12,20,31,.56) 0%,rgba(12,20,31,.28) 28%,rgba(12,20,31,.56) 72%,rgba(12,20,31,.7) 100%); }

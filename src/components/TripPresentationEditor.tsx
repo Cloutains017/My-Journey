@@ -102,20 +102,6 @@ function CropFrame({ source, position, label, positionVariable, onChange, onPrev
   </div>;
 }
 
-function CropControls({ label, value, onChange, disabled = false }: { label: string; value?: CoverPosition | null; onChange: (position: CoverPosition | null) => void; disabled?: boolean }) {
-  const point = value || CENTER_COVER;
-  function move(x: number, y: number) {
-    onChange({ x: Math.max(0, Math.min(100, point.x + x)), y: Math.max(0, Math.min(100, point.y + y)) });
-  }
-  return <div className="cover-crop-controls" role="group" aria-label={`${label}调整按钮`}>
-    <button className="cover-control-up" type="button" disabled={disabled} aria-label={`${label}向上移动照片`} title="向上移动照片" onClick={() => move(0, 5)}><span aria-hidden="true">↑</span></button>
-    <button className="cover-control-left" type="button" disabled={disabled} aria-label={`${label}向左移动照片`} title="向左移动照片" onClick={() => move(5, 0)}><span aria-hidden="true">←</span></button>
-    <button className="cover-control-center" type="button" disabled={disabled} aria-label={`${label}恢复居中`} title="恢复居中" onClick={() => onChange(null)}>居中</button>
-    <button className="cover-control-right" type="button" disabled={disabled} aria-label={`${label}向右移动照片`} title="向右移动照片" onClick={() => move(-5, 0)}><span aria-hidden="true">→</span></button>
-    <button className="cover-control-down" type="button" disabled={disabled} aria-label={`${label}向下移动照片`} title="向下移动照片" onClick={() => move(0, -5)}><span aria-hidden="true">↓</span></button>
-  </div>;
-}
-
 export default function TripPresentationEditor({ trip, photoCount, onChange, disabled = false }: {
   trip: Partial<Trip>; photoCount: number; onChange: (patch: Partial<TripPresentation>) => void; disabled?: boolean;
 }) {
@@ -168,10 +154,9 @@ export default function TripPresentationEditor({ trip, photoCount, onChange, dis
             <CropFrame key={`card-${trip.cover_image}`} source={trip.cover_image} label="首页封面取景" position={trip.cover_card_position} positionVariable="--card-position" disabled={disabled}
               onChange={point => commit("cover_card_position", point)} onPreview={point => preview("cover_card_position", point)} /> : undefined} />
         </div>
-        {trip.cover_image && <CropControls label="首页封面" value={trip.cover_card_position} disabled={disabled} onChange={point => commit("cover_card_position", point)} />}
       </div>
       {trip.cover_image ? <>
-        <p id="cover-crop-help" className="cover-crop-help">拖动照片或使用十字方向键调整取景，中央按钮恢复居中。首页、电脑和手机分别保存，互不影响。</p>
+        <p id="cover-crop-help" className="cover-crop-help">拖动照片调整取景，也可聚焦图片后使用键盘方向键微调。首页、电脑和手机分别保存，互不影响。</p>
         <div>
           <h3 className="cover-preview-heading">详情页封面预览</h3>
           <div className="cover-device-previews">
@@ -182,7 +167,6 @@ export default function TripPresentationEditor({ trip, photoCount, onChange, dis
                 onChange={point => commit("cover_hero_position", point)} onPreview={point => preview("cover_hero_position", point)}>
                 <div className="cover-hero-shade" aria-hidden="true" />{heroCopy(desktop)}
               </CropFrame>
-              <CropControls label="电脑封面" value={trip.cover_hero_position} disabled={disabled} onChange={point => commit("cover_hero_position", point)} />
             </div>
             <div className="cover-device-preview">
               <h4 className="cover-device-heading">手机封面 <span>{mobile.width} × {mobile.height}</span></h4>
@@ -191,7 +175,6 @@ export default function TripPresentationEditor({ trip, photoCount, onChange, dis
                 onChange={point => commit("cover_mobile_position", point)} onPreview={point => preview("cover_mobile_position", point)}>
                 <div className="cover-hero-shade" aria-hidden="true" />{heroCopy(mobile)}
               </CropFrame>
-              <CropControls label="手机封面" value={mobilePosition} disabled={disabled} onChange={point => commit("cover_mobile_position", point)} />
             </div>
           </div>
         </div>
