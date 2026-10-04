@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
+@import "@fontsource-variable/noto-sans-sc";
 
 @theme {
   /* Warm editorial palette */
@@ -43,8 +44,7 @@
   --font-display: "Cormorant Garamond", "EB Garamond", "Times New Roman", serif;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-journey-serif: "Iowan Old Style", "Palatino Linotype", "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
-  --font-journey-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --font-journey-sans: "Noto Sans SC Variable", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 /* ── Base ── */
@@ -106,18 +106,19 @@ h2 {
 .trip-hero-title {
   color: #f4d49d;
   max-width: 16em;
-  font-family: var(--font-journey-serif);
-  font-size: clamp(2.125rem, 5.2vw, 4.5rem);
-  font-weight: 400;
-  line-height: 1.35;
-  letter-spacing: 0.025em;
+  font-family: var(--font-journey-sans);
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
   text-wrap: balance;
 }
 .trip-hero-location, .trip-hero-date { font-family: var(--font-journey-sans); font-size: 13px; line-height: 1.8; font-weight: 400; }
-.trip-hero-location { max-width: 36em; letter-spacing: 0.06em; text-wrap: balance; }
+.trip-hero-location { max-width: 36em; letter-spacing: 0.025em; text-wrap: balance; }
 .trip-hero-date { font-variant-numeric: tabular-nums; letter-spacing: 0.035em; }
 
 .trip-hero-rating > span {
+  font-family: var(--font-journey-sans);
   color: #f4d49d;
   background: rgb(12 20 31 / 0.35);
   border-color: rgb(244 212 157 / 0.65);
@@ -508,23 +509,25 @@ a {
 .back-to-top { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 48px; height: 56px; border: 1px solid var(--color-hairline); border-radius: 16px; background: var(--color-canvas); color: var(--color-muted); box-shadow: 0 4px 24px rgb(0 0 0 / .08); cursor: pointer; font-size: 10px; }
 .back-to-top:hover { color: var(--color-primary); border-color: var(--color-primary); }
 .back-to-top:focus-visible, .photo-gallery-tile:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
-.trip-card { font-family: var(--font-journey-sans); }
-.trip-card-meta { font-size: 12px; line-height: 1.6; letter-spacing: 0.015em; }
-.trip-card-title { font-family: var(--font-journey-serif); font-size: 22px; line-height: 1.45; font-weight: 400; letter-spacing: 0.015em; text-wrap: pretty; }
+.home-journal .font-sans, .home-journal .font-display, .home-journal h1, .trip-card { font-family: var(--font-journey-sans); }
+.home-journal h1 { font-size: clamp(28px, 4vw, 36px); line-height: 1.4; font-weight: 600; letter-spacing: 0; }
+.education-card h3 { font-family: var(--font-journey-sans); font-weight: 600; font-size: 18px; line-height: 1.5; letter-spacing: 0; }
+.trip-card-meta { font-size: 12px; line-height: 1.6; letter-spacing: 0; }
+.trip-card-title { font-family: var(--font-journey-sans); font-size: 20px; line-height: 1.5; font-weight: 600; letter-spacing: 0; text-wrap: pretty; }
 .trip-card:hover .trip-card-title, .trip-card:focus-visible .trip-card-title { color: var(--color-primary); }
 .trip-card-location { font-size: 13px; line-height: 1.7; }
 .trip-card-location svg { margin-top: 4px; }
-.trip-card-excerpt { font-size: 14px; line-height: 1.85; letter-spacing: 0.01em; white-space: normal; }
+.trip-card-excerpt { font-size: 14px; line-height: 1.8; letter-spacing: 0; white-space: normal; }
 .trip-card-footer { font-size: 12px; line-height: 1.6; }
 .trip-article, .trip-article .font-sans { font-family: var(--font-journey-sans); }
-.trip-prose { font-size: 16px; line-height: 1.95; letter-spacing: 0.015em; color: var(--color-body); overflow-wrap: anywhere; }
+.trip-prose { max-width: 38em; margin-inline: auto; font-size: 16px; line-height: 1.85; letter-spacing: 0; color: var(--color-body); overflow-wrap: anywhere; }
 .trip-prose > p { margin: 0; overflow-wrap: anywhere; }
-.trip-prose .prose-editorial { margin: 0; padding-left: 1.15em; font-family: var(--font-journey-serif); font-size: 1.08em; font-style: normal; line-height: 1.85; letter-spacing: 0.02em; opacity: 1; }
-.trip-prose > :not(:first-child) { margin-top: 1.35em; }
+.trip-prose .prose-editorial { margin: 0; padding-left: 1.15em; font-family: var(--font-journey-sans); font-size: 1em; font-style: normal; line-height: 1.85; letter-spacing: 0; opacity: 1; }
+.trip-prose > :not(:first-child) { margin-top: 1.15em; }
 .trip-article .vote-form h3 { font-family: var(--font-journey-sans); font-size: 18px; font-weight: 600; line-height: 1.6; letter-spacing: 0; }
-.trip-article .trip-pagination-link .font-display { font-family: var(--font-journey-serif); font-size: 20px; line-height: 1.5; letter-spacing: 0.01em; }
+.trip-article .trip-pagination-link .font-display { font-family: var(--font-journey-sans); font-size: 18px; font-weight: 600; line-height: 1.5; letter-spacing: 0; }
 .trip-article .uppercase { letter-spacing: 0.08em; text-transform: none; }
-.photo-gallery-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 20px; font-family: var(--font-journey-serif); font-size: 18px; line-height: 1.5; font-weight: 400; letter-spacing: 0.015em; color: var(--color-ink); }
+.photo-gallery-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 20px; font-family: var(--font-journey-sans); font-size: 18px; line-height: 1.5; font-weight: 600; letter-spacing: 0; color: var(--color-ink); }
 .photo-gallery-heading > span:first-child { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .photo-gallery-count { font-family: var(--font-journey-sans); font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--color-muted); font-variant-numeric: tabular-nums; }
 .photo-gallery-grid { column-gap: 10px; }
@@ -541,7 +544,8 @@ a {
 .photo-gallery-tile .travel-image[data-image-state="loading"], .trip-card-media .travel-image[data-image-state="loading"] { opacity: 0; }
 @media (min-width: 640px) {
   .trip-card-meta, .trip-card-footer { font-size: 13px; }
-  .trip-card-title { font-size: 24px; }
+  .trip-card-title { font-size: 22px; }
+  .education-card h3 { font-size: 20px; }
   .trip-prose { font-size: 17px; }
   .trip-hero-location { font-size: 14px; }
   .photo-gallery-heading { font-size: 20px; }
@@ -556,7 +560,7 @@ a {
 @media (max-width: 639px) {
   .vote-form input { min-height: 48px; font-size: 16px; }
   .vote-form button { min-height: 44px; }
-  .trip-prose .prose-editorial { padding-left: 1rem; font-size: 1.125rem; }
+  .trip-prose .prose-editorial { padding-left: 1rem; }
 }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .trip-card-media { transition: transform 250ms ease, box-shadow 250ms ease; }

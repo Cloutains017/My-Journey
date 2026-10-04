@@ -4,7 +4,7 @@ import type { Education } from "@/lib/types";
 export default function EducationCard({ education }: { education: Education }) {
   return (
     <Link href={`/map?education=${encodeURIComponent(education.id)}`} id={`education-${education.id}`}
-      className="group block scroll-mt-32 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8A5AB4]"
+      className="education-card group block scroll-mt-32 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8A5AB4]"
       aria-label={`在地图上查看${education.school}`}>
       <article className="flex items-center gap-5 border-b border-hairline-soft py-6 transition-colors duration-300 group-hover:border-[#8A5AB4]/60">
         <div className="flex h-[100px] w-[100px] shrink-0 items-center justify-center rounded-lg bg-[#8A5AB4]/12 text-[#8A5AB4] sm:h-[140px] sm:w-[180px]">
