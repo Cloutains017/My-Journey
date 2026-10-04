@@ -67,16 +67,20 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
           <TravelImage src={t.cover_image} alt="" fill sizes="100vw" preload variant="hero" className="-z-10 object-cover object-center" />
         )}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(12,20,31,0.56)_0%,rgba(12,20,31,0.28)_28%,rgba(12,20,31,0.56)_72%,rgba(12,20,31,0.7)_100%)]" aria-hidden="true" />
-        <div className="flex min-h-[100svh] flex-col items-center justify-center px-6 pb-16 pt-24 text-center">
-          {t.location && <p className="trip-hero-reveal trip-hero-location mb-5 text-white/85">{t.location}</p>}
-          <h1 className="trip-hero-reveal trip-hero-title break-words drop-shadow-lg" style={{ animationDelay: "80ms" }}>
-            {t.title}
-          </h1>
-          <p className="trip-hero-reveal trip-hero-date mt-6 text-white/90" style={{ animationDelay: "160ms" }}>
-            <time dateTime={t.date}>{t.date}</time>
-            {t.end_date && t.end_date !== t.date && <> — <time dateTime={t.end_date}>{t.end_date}</time></>}
-          </p>
-          <div className="trip-hero-reveal trip-hero-rating mt-8" style={{ animationDelay: "240ms" }}><RatingBadge rating={t.rating} size="lg" /></div>
+        <div className="trip-hero-layout">
+          <div className="trip-hero-copy">
+            {t.location && <p className="trip-hero-reveal trip-hero-location mb-5 text-white/85">{t.location}</p>}
+            <h1 className="trip-hero-reveal trip-hero-title break-words" style={{ animationDelay: "80ms" }}>
+              {t.title}
+            </h1>
+            <div className="trip-hero-details">
+              <p className="trip-hero-reveal trip-hero-date text-white/90" style={{ animationDelay: "160ms" }}>
+                <time dateTime={t.date}>{t.date}</time>
+                {t.end_date && t.end_date !== t.date && <> — <time dateTime={t.end_date}>{t.end_date}</time></>}
+              </p>
+              <div className="trip-hero-reveal trip-hero-rating" style={{ animationDelay: "240ms" }}><RatingBadge rating={t.rating} size="lg" /></div>
+            </div>
+          </div>
         </div>
         <a href="#trip-content" className="trip-read-cue" aria-label="向下阅读游记">
           <span>向下阅读</span>
