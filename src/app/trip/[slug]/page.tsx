@@ -79,7 +79,7 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
                 <time dateTime={t.date}>{t.date}</time>
                 {t.end_date && t.end_date !== t.date && <> — <time dateTime={t.end_date}>{t.end_date}</time></>}
               </p>
-              <div className="trip-hero-rating"><RatingBadge rating={t.rating} size="lg" explain /></div>
+              <div className="trip-hero-rating"><RatingBadge rating={t.rating} size="lg" /></div>
             </div>
           </div>
         </div>

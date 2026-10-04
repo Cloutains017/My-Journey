@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AGREEMENT_LABELS, DESIRE_LABELS, RATING_LABELS, RATING_DESCRIPTIONS } from "@/lib/types";
+import { AGREEMENT_LABELS, DESIRE_LABELS, RATING_LABELS } from "@/lib/types";
 import { ACTIVE_VOTE_COLORS, VOTE_COLORS } from "@/components/voteStyles";
 
 type Kind = "agreement" | "desire";
@@ -77,7 +77,7 @@ export default function TripFeedback({ tripId, rating }: { tripId: string; ratin
         {QUESTIONS.map(({ kind, title, labels, name }) => (
           <fieldset key={kind} className="feedback-question" disabled={submitting || saved[kind]}>
             <legend>{title}</legend>
-            {kind === "agreement" ? <p className="feedback-question-hint">博主评级：{RATING_LABELS[rating]} · {RATING_DESCRIPTIONS[rating]}</p> : <p className="feedback-question-hint">选择你的心动指数</p>}
+            {kind === "agreement" ? <p className="feedback-question-hint">博主评级：{RATING_LABELS[rating]}</p> : <p className="feedback-question-hint">选择你的心动指数</p>}
             <div className="feedback-choices">
               {[1, 2, 3, 4, 5].map(value => <button key={value} type="button" aria-pressed={draft[kind] === value}
                 disabled={submitting || saved[kind]}
@@ -89,10 +89,6 @@ export default function TripFeedback({ tripId, rating }: { tripId: string; ratin
           </fieldset>
         ))}
       </div>
-      <details className="feedback-rating-guide">
-        <summary>评级用语说明</summary>
-        <dl>{[1, 2, 3, 4, 5].map(value => <div key={value}><dt>{RATING_LABELS[value]}</dt><dd>{RATING_DESCRIPTIONS[value]}</dd></div>)}</dl>
-      </details>
       <div className="feedback-compose">
         <div className="feedback-nickname">
           <label htmlFor={`feedback-nickname-${tripId}`}>你的昵称</label>

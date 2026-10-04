@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import { ACTIVE_VOTE_COLORS, VOTE_COLORS } from "../src/components/voteStyles.ts";
-import { AGREEMENT_LABELS, DESIRE_LABELS, RATING_LABELS, RATING_DESCRIPTIONS } from "../src/lib/types.ts";
+import { AGREEMENT_LABELS, DESIRE_LABELS, RATING_LABELS } from "../src/lib/types.ts";
 
 const require = createRequire(import.meta.url);
 
@@ -34,7 +34,7 @@ async function renderVote(
   const localRequire = (id: string) => {
     if (id === "react") return reactWithInitialVote;
     if (id === "react/jsx-runtime") return require(id);
-    if (id === "@/lib/types") return { AGREEMENT_LABELS, DESIRE_LABELS, RATING_LABELS, RATING_DESCRIPTIONS };
+    if (id === "@/lib/types") return { AGREEMENT_LABELS, DESIRE_LABELS, RATING_LABELS };
     if (id === "@/components/voteStyles") return { ACTIVE_VOTE_COLORS, VOTE_COLORS };
     throw new Error(`Unexpected component dependency: ${id}`);
   };

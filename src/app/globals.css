@@ -654,8 +654,6 @@ a {
 .vote-error { color: #b42318; }
 .dark .vote-error { color: #fda29b; }
 .trip-hero-rating { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.rating-explanation { color: inherit; font-size: 12px; font-weight: 400; }
-.trip-hero-rating .rating-explanation { color: rgb(255 255 255 / .85); }
 .trip-feedback { padding: 36px 0; border-top: 1px solid var(--color-hairline); }
 .feedback-title { color: var(--color-ink); font-size: 24px; font-weight: 400; line-height: 1.5; }
 .feedback-intro { margin-top: 8px; color: var(--color-muted); font-size: 13px; line-height: 1.8; }
@@ -669,12 +667,6 @@ a {
 .feedback-choice[aria-pressed="true"] { outline: 1px solid currentColor; outline-offset: 2px; font-weight: 600; }
 .feedback-question-error, .feedback-saved { margin-top: 12px; font-size: 13px; line-height: 1.8; }
 .feedback-saved, .feedback-confirmation { color: var(--color-accent-teal-text); }
-.feedback-rating-guide { margin-top: 22px; color: var(--color-muted); font-size: 12px; line-height: 1.8; }
-.feedback-rating-guide summary { width: fit-content; padding-block: 8px; cursor: pointer; }
-.feedback-rating-guide summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
-.feedback-rating-guide dl { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 8px; }
-.feedback-rating-guide dl > div { display: flex; gap: 6px; }
-.feedback-rating-guide dt { color: var(--color-ink); }
 .feedback-compose { display: grid; gap: 18px; padding-top: 24px; margin-top: 18px; border-top: 1px solid var(--color-hairline-soft); }
 .feedback-compose label { display: block; margin-bottom: 8px; color: var(--color-ink); font-size: 13px; }
 .feedback-compose label span { color: var(--color-muted); }
