@@ -616,7 +616,6 @@ a {
 .trip-card-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--journal-card-gap); padding-block: var(--journal-card-padding); border-bottom: 1px solid var(--color-hairline-soft); }
 .home-journal .trip-card-layout, .home-journal .education-card-layout { position: relative; --card-rule-color: var(--color-primary); }
 .home-journal .education-card-layout { --card-rule-color: #8a5ab4; }
-.home-journal :is(.trip-card-layout, .education-card-layout)::before,
 .home-journal :is(.trip-card-layout, .education-card-layout)::after {
   content: "";
   position: absolute;
@@ -628,9 +627,7 @@ a {
   transform-origin: left;
   transition: transform var(--motion-feedback) var(--ease-journal);
 }
-.home-journal :is(.trip-card-layout, .education-card-layout)::before { top: 0; }
 .home-journal :is(.trip-card-layout, .education-card-layout)::after { bottom: -1px; }
-.home-journal :is(.trip-card, .education-card):is(:hover, :focus-visible, :active) > article::before,
 .home-journal :is(.trip-card, .education-card):is(:hover, :focus-visible, :active) > article::after { transform: scaleX(1); }
 .trip-card-media { width: 100%; aspect-ratio: 4 / 3; border-radius: 6px; }
 .trip-card-copy { display: flex; flex-direction: column; min-width: 0; }
