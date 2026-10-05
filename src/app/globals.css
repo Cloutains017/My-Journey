@@ -655,6 +655,9 @@ a {
 .trip-prose .prose-editorial { margin: 0; padding-left: 1.15em; font-family: var(--font-journey-serif); font-size: 1em; font-style: normal; line-height: inherit; letter-spacing: inherit; opacity: 1; }
 .trip-prose > :not(:first-child) { margin-top: 1.25em; }
 .dark .trip-prose { line-height: 1.95; }
+@media (max-width: 767px) {
+  .trip-prose { text-align: justify; text-align-last: start; text-justify: inter-ideograph; text-wrap: wrap; }
+}
 .trip-article .trip-pagination-link .font-display { font-family: var(--font-journey-serif); font-size: 18px; font-weight: 400; line-height: 1.5; letter-spacing: 0; }
 .trip-article .uppercase { letter-spacing: 0.08em; text-transform: none; }
 .photo-gallery-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 20px; font-family: var(--font-journey-serif); font-size: 1.125rem; line-height: 1.5; font-weight: 400; letter-spacing: 0.015em; color: var(--color-ink); }

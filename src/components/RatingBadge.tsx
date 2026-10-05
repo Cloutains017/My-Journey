@@ -1,8 +1,8 @@
 import { RATING_LABELS } from "@/lib/types";
 
 const RATING_STYLES: Record<number, string> = {
-  1: "bg-hairline text-muted border-hairline",
-  2: "bg-hairline text-muted border-hairline",
+  1: "bg-muted/10 text-muted border-muted/20",
+  2: "bg-muted/10 text-muted border-muted/20",
   3: "bg-accent-teal/10 text-accent-teal-text border-accent-teal/20",
   4: "bg-accent-amber/10 text-accent-amber-text border-accent-amber/20",
   5: "bg-primary/10 text-primary-text border-primary/20",
