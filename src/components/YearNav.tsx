@@ -12,12 +12,15 @@ export default function YearNav({ years }: YearNavProps) {
   const pendingYearRef = useRef<number | null>(null);
   const scrollIdleRef = useRef<number | null>(null);
   const finishJumpRef = useRef<(() => void) | null>(null);
+  const yearKey = years.join(",");
 
   useEffect(() => {
+    const observedYears = yearKey ? yearKey.split(",").map(Number) : [];
+    const nativeScrollEnd = "onscrollend" in window;
     function syncYear() {
       if (pendingYearRef.current !== null) return;
       const anchor = window.innerHeight * 0.3;
-      const current = years.find(year => {
+      const current = observedYears.find(year => {
         const bounds = document.getElementById(`year-${year}`)?.getBoundingClientRect();
         return bounds && bounds.bottom > anchor;
       });
@@ -26,6 +29,7 @@ export default function YearNav({ years }: YearNavProps) {
 
     function finishJump() {
       const target = pendingYearRef.current;
+      if (target === null) return;
       pendingYearRef.current = null;
       scrollIdleRef.current = null;
       const section = target === null ? null : document.getElementById(`year-${target}`);
@@ -43,7 +47,7 @@ export default function YearNav({ years }: YearNavProps) {
     finishJumpRef.current = finishJump;
 
     function onScroll() {
-      if (pendingYearRef.current === null) return;
+      if (pendingYearRef.current === null || nativeScrollEnd) return;
       if (scrollIdleRef.current !== null) window.clearTimeout(scrollIdleRef.current);
       // Wait for scrolling to settle, rather than guessing the duration of a long jump.
       scrollIdleRef.current = window.setTimeout(finishJump, 200);
@@ -64,18 +68,20 @@ export default function YearNav({ years }: YearNavProps) {
       { rootMargin: "-30% 0px -69% 0px" },
     );
 
-    for (const y of years) {
+    for (const y of observedYears) {
       const el = document.getElementById(`year-${y}`);
       if (el) observer.observe(el);
     }
 
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scrollend", finishJump);
     window.addEventListener("wheel", interruptJump, { passive: true });
     window.addEventListener("touchstart", interruptJump, { passive: true });
     window.addEventListener("keydown", interruptJump);
     return () => {
       observer.disconnect();
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scrollend", finishJump);
       window.removeEventListener("wheel", interruptJump);
       window.removeEventListener("touchstart", interruptJump);
       window.removeEventListener("keydown", interruptJump);
@@ -84,7 +90,7 @@ export default function YearNav({ years }: YearNavProps) {
       pendingYearRef.current = null;
       finishJumpRef.current = null;
     };
-  }, [years]);
+  }, [yearKey]);
 
   useEffect(() => {
     const list = listRef.current;
@@ -117,8 +123,16 @@ export default function YearNav({ years }: YearNavProps) {
     pendingYearRef.current = year;
     setActiveYear(year);
     if (scrollIdleRef.current !== null) window.clearTimeout(scrollIdleRef.current);
-    // A click on the current section may not emit any scroll events.
-    scrollIdleRef.current = window.setTimeout(() => finishJumpRef.current?.(), 200);
+    scrollIdleRef.current = null;
+    const bounds = section.getBoundingClientRect();
+    const marginTop = parseFloat(window.getComputedStyle(section).scrollMarginTop) || 0;
+    const atBottom = Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight;
+    const alreadyAtTarget = Math.abs(bounds.top - marginTop) <= 2 ||
+      (atBottom && bounds.top >= marginTop && bounds.top < window.innerHeight);
+    // Native completion survives pauses in long smooth scrolls. No-op clicks have no scrollend.
+    if (!("onscrollend" in window) || alreadyAtTarget) {
+      scrollIdleRef.current = window.setTimeout(() => finishJumpRef.current?.(), alreadyAtTarget ? 0 : 200);
+    }
     section.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
       block: "start",
