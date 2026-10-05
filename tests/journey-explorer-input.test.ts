@@ -44,6 +44,7 @@ async function mount(search = "") {
     if (id === "react") return react;
     if (id === "next/navigation") return { useSearchParams: () => params };
     if (id === "@/components/YearNav") return "year-nav";
+    if (id === "@/components/JourneyCardList") return "journey-card-list";
     if (id === "@/lib/journey-browsing") return browsing.exports;
     if (id === "@/lib/types") return { RATING_LABELS: { 5: "夯" } };
     return require(id);

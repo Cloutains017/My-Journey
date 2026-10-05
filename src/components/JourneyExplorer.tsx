@@ -3,6 +3,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import YearNav from "@/components/YearNav";
+import JourneyCardList from "@/components/JourneyCardList";
 import { RATING_LABELS } from "@/lib/types";
 import { filterJourneys, readJourneyFilters, type JourneySearchRecord } from "@/lib/journey-browsing";
 
@@ -90,7 +91,7 @@ export default function JourneyExplorer({ items }: { items: JourneyItem[] }) {
             </p>
             {active && <button type="button" onClick={reset} className="journey-clear">清除筛选</button>}
           </div>
-          <div className="journey-years">
+          <JourneyCardList itemKey={filtered.map(item => `${item.kind}:${item.id}`).join(",")}>
             {years.map(year => <div key={year} id={`year-${year}`} className="scroll-mt-36 lg:scroll-mt-24">
               <h2 className="journey-year-heading border-b border-hairline">
                 <span className="select-none font-display text-4xl leading-none font-normal tracking-[-1px] text-primary tabular-nums">{year}</span>
@@ -100,7 +101,7 @@ export default function JourneyExplorer({ items }: { items: JourneyItem[] }) {
                 {groups.get(year)!.map(item => <div key={`${item.kind}-${item.id}`} className="journey-result">{item.content}</div>)}
               </div>
             </div>)}
-          </div>
+          </JourneyCardList>
           {filtered.length === 0 && <div className="journey-empty">
             <p className="mb-2 font-display text-2xl text-ink">{items.length ? "暂时没有找到这段旅程" : "旅程还在路上"}</p>
             <p className="text-sm leading-relaxed text-muted">{items.length ? "换个城市、标题或筛选条件试试。" : "新的足迹，会从这里开始。"}</p>

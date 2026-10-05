@@ -628,7 +628,12 @@ a {
   transition: transform var(--motion-feedback) var(--ease-journal);
 }
 .home-journal :is(.trip-card-layout, .education-card-layout)::after { bottom: -1px; }
-.home-journal :is(.trip-card, .education-card):is(:hover, :focus-visible, :active) > article::after { transform: scaleX(1); }
+@media (min-width: 768px) {
+  .home-journal :is(.trip-card, .education-card):is(:hover, :focus-visible, :active) > article::after { transform: scaleX(1); }
+}
+@media (max-width: 767px) {
+  .home-journal .journey-result[data-scroll-active="true"] > :is(.trip-card, .education-card) > article::after { transform: scaleX(1); }
+}
 .trip-card-media { width: 100%; aspect-ratio: 4 / 3; border-radius: 6px; }
 .trip-card-copy { display: flex; flex-direction: column; min-width: 0; }
 .trip-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 20px; font-size: 12px; line-height: 1.6; letter-spacing: 0; }
