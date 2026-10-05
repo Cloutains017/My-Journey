@@ -9,17 +9,58 @@ interface YearNavProps {
 export default function YearNav({ years }: YearNavProps) {
   const [activeYear, setActiveYear] = useState<number | null>(years[0] ?? null);
   const listRef = useRef<HTMLDivElement>(null);
+  const pendingYearRef = useRef<number | null>(null);
+  const scrollIdleRef = useRef<number | null>(null);
+  const finishJumpRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    function syncYear() {
+      if (pendingYearRef.current !== null) return;
+      const anchor = window.innerHeight * 0.3;
+      const current = years.find(year => {
+        const bounds = document.getElementById(`year-${year}`)?.getBoundingClientRect();
+        return bounds && bounds.bottom > anchor;
+      });
+      if (current !== undefined) setActiveYear(current);
+    }
+
+    function finishJump() {
+      const target = pendingYearRef.current;
+      pendingYearRef.current = null;
+      scrollIdleRef.current = null;
+      const section = target === null ? null : document.getElementById(`year-${target}`);
+      const bounds = section?.getBoundingClientRect();
+      const anchor = window.innerHeight * 0.3;
+      const marginTop = section ? parseFloat(window.getComputedStyle(section).scrollMarginTop) || 0 : 0;
+      const atBottom = Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight;
+      // Keep short final years selected even when the page bottom prevents top alignment.
+      // If the target never arrived, catch up after a scrollbar interruption too.
+      const arrived = bounds && bounds.bottom > 0 &&
+        ((bounds.top <= anchor && bounds.bottom > anchor) || Math.abs(bounds.top - marginTop) <= 2 ||
+          (atBottom && bounds.top < window.innerHeight));
+      if (!arrived) syncYear();
+    }
+    finishJumpRef.current = finishJump;
+
+    function onScroll() {
+      if (pendingYearRef.current === null) return;
+      if (scrollIdleRef.current !== null) window.clearTimeout(scrollIdleRef.current);
+      // Wait for scrolling to settle, rather than guessing the duration of a long jump.
+      scrollIdleRef.current = window.setTimeout(finishJump, 200);
+    }
+
+    function interruptJump(event: Event) {
+      if (event.type === "keydown" &&
+        !["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes((event as KeyboardEvent).key)) return;
+      if (pendingYearRef.current === null) return;
+      pendingYearRef.current = null;
+      if (scrollIdleRef.current !== null) window.clearTimeout(scrollIdleRef.current);
+      scrollIdleRef.current = null;
+      syncYear();
+    }
+
     const observer = new IntersectionObserver(
-      () => {
-        const anchor = window.innerHeight * 0.3;
-        const current = years.find(year => {
-          const bounds = document.getElementById(`year-${year}`)?.getBoundingClientRect();
-          return bounds && bounds.bottom > anchor;
-        });
-        if (current !== undefined) setActiveYear(current);
-      },
+      syncYear,
       { rootMargin: "-30% 0px -69% 0px" },
     );
 
@@ -28,7 +69,21 @@ export default function YearNav({ years }: YearNavProps) {
       if (el) observer.observe(el);
     }
 
-    return () => observer.disconnect();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("wheel", interruptJump, { passive: true });
+    window.addEventListener("touchstart", interruptJump, { passive: true });
+    window.addEventListener("keydown", interruptJump);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("wheel", interruptJump);
+      window.removeEventListener("touchstart", interruptJump);
+      window.removeEventListener("keydown", interruptJump);
+      if (scrollIdleRef.current !== null) window.clearTimeout(scrollIdleRef.current);
+      scrollIdleRef.current = null;
+      pendingYearRef.current = null;
+      finishJumpRef.current = null;
+    };
   }, [years]);
 
   useEffect(() => {
@@ -57,11 +112,17 @@ export default function YearNav({ years }: YearNavProps) {
   }, [activeYear]);
 
   function scrollTo(year: number) {
-    document.getElementById(`year-${year}`)?.scrollIntoView({
+    const section = document.getElementById(`year-${year}`);
+    if (!section) return;
+    pendingYearRef.current = year;
+    setActiveYear(year);
+    if (scrollIdleRef.current !== null) window.clearTimeout(scrollIdleRef.current);
+    // A click on the current section may not emit any scroll events.
+    scrollIdleRef.current = window.setTimeout(() => finishJumpRef.current?.(), 200);
+    section.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
       block: "start",
     });
-    setActiveYear(year);
   }
 
   if (years.length <= 1) return null;

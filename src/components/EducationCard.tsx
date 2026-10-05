@@ -6,7 +6,7 @@ export default function EducationCard({ education }: { education: Education }) {
     <Link href={`/map?education=${encodeURIComponent(education.id)}`} id={`education-${education.id}`}
       className="education-card group block scroll-mt-32 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8A5AB4]"
       aria-label={`在地图上查看${education.school}`}>
-      <article className="flex items-center gap-5 border-b border-hairline-soft py-7 transition-colors duration-300 group-hover:border-[#8A5AB4]/60">
+      <article className="education-card-layout flex items-center gap-5 border-b border-hairline-soft py-7">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-[#8A5AB4]/8 text-[#8A5AB4]">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="m2 8 10-5 10 5-10 5L2 8Zm4 2v6c4 3 8 3 12 0v-6M22 8v8" />

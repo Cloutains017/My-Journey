@@ -1,8 +1,8 @@
 export default function Footer() {
   return (
-    <footer className="relative mt-24 border-t border-hairline">
+    <footer className="journal-footer relative border-t border-hairline">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-      <div className="max-w-5xl mx-auto px-8 py-14">
+      <div className="max-w-5xl mx-auto px-5 py-10 sm:px-8 sm:py-14">
         <div className="flex flex-col sm:flex-row gap-8 sm:gap-16">
           <div className="sm:w-[60%]">
             <span className="font-display text-xl text-ink tracking-[-0.5px]">Cloutains的旅程</span>

@@ -90,13 +90,13 @@ export default function JourneyExplorer({ items }: { items: JourneyItem[] }) {
             </p>
             {active && <button type="button" onClick={reset} className="journey-clear">清除筛选</button>}
           </div>
-          <div className="flex flex-col gap-10">
+          <div className="journey-years">
             {years.map(year => <div key={year} id={`year-${year}`} className="scroll-mt-36 lg:scroll-mt-24">
-              <div className="mb-6 flex items-center gap-4 border-b border-hairline pb-5">
+              <h2 className="journey-year-heading border-b border-hairline">
                 <span className="select-none font-display text-4xl leading-none font-normal tracking-[-1px] text-primary tabular-nums">{year}</span>
                 <span className="mt-1 select-none font-display text-xl leading-none text-primary/30">年</span>
-              </div>
-              <div className="flex flex-col gap-3 sm:gap-6">
+              </h2>
+              <div className="journey-year-list">
                 {groups.get(year)!.map(item => <div key={`${item.kind}-${item.id}`} className="journey-result">{item.content}</div>)}
               </div>
             </div>)}

@@ -44,10 +44,10 @@ export default function Nav() {
   ];
 
   return (
-    <nav aria-label="主导航" className={`fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between gap-2 px-4 sm:px-6 md:px-10 transition-colors duration-300 ${onHero ? "trip-nav bg-transparent text-white" : "bg-canvas/80 backdrop-blur-2xl border-b border-hairline"}`}>
+    <nav aria-label="主导航" className={`journal-nav fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between gap-2 px-4 sm:px-6 md:px-10 transition-colors duration-300 ${onHero ? "trip-nav bg-transparent text-white" : "bg-canvas/80 backdrop-blur-2xl border-b border-hairline"}`}>
       {!onHero && <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />}
 
-      <Link href="/" className="flex min-h-11 shrink-0 items-center gap-1.5 sm:gap-2.5 group">
+      <Link href="/" className="journal-brand flex min-h-11 shrink-0 items-center gap-1.5 sm:gap-2.5 group">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={onHero ? "text-[#f4d49d]" : "text-primary"}>
           <path d="M12 2L2 22h20L12 2z" />
           <path d="M12 2l4 10H8l4-10z" opacity="0.4" />
@@ -62,9 +62,10 @@ export default function Nav() {
           <Link
             key={href}
             href={href}
-            className={`relative text-sm font-medium transition-colors pb-1 ${
+            aria-current={pathname === href ? "page" : undefined}
+            className={`relative inline-flex min-h-11 items-center text-sm font-medium transition-colors pb-1 ${
               onHero ? "text-white/85 hover:text-white" : pathname === href
-                ? "text-ink after:absolute after:bottom-[-17px] after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full"
+                ? "text-ink after:absolute after:bottom-[-10px] after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full"
                 : "text-muted hover:text-ink"
             }`}
           >
@@ -98,7 +99,7 @@ export default function Nav() {
             key={href}
             href={href}
             aria-current={pathname === href ? "page" : undefined}
-            className={`flex min-h-11 min-w-9 items-center justify-center text-xs sm:text-sm font-medium transition-colors ${
+            className={`flex min-h-11 min-w-11 items-center justify-center text-xs sm:text-sm font-medium transition-colors ${
               onHero ? "text-white/85 hover:text-white" : pathname === href
                 ? "text-ink"
                 : "text-muted hover:text-ink"

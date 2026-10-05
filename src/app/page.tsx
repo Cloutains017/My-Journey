@@ -57,8 +57,8 @@ export default async function HomePage() {
 
       {/* Info section — below map */}
       <div className="mx-auto max-w-5xl px-5 sm:px-8">
-        <div className="border-b border-hairline py-9 sm:py-12 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-7 sm:gap-4">
-          <div>
+        <div className="home-summary border-b border-hairline">
+          <div className="home-intro">
             <p className="text-[11px] uppercase tracking-[4px] text-muted-soft mb-2 font-medium font-sans">
               Where I&apos;ve Been
             </p>
@@ -70,18 +70,18 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="flex items-end gap-5 sm:gap-7">
-            <div className="flex flex-col">
-              <span className="font-display text-3xl sm:text-4xl text-ink tabular-nums tracking-[-0.5px]">{tripList.length}</span>
-              <span className="text-[11px] text-muted-soft mt-0.5 font-sans tracking-wide">段旅程</span>
+          <div className="home-stats">
+            <div className="home-stat">
+              <span className="home-stat-value text-ink">{tripList.length}</span>
+              <span className="home-stat-label">段旅程</span>
             </div>
-            <div className="flex flex-col">
-              <span className="font-display text-3xl sm:text-4xl text-primary tabular-nums tracking-[-0.5px]">{cityCount || "—"}</span>
-              <span className="text-[11px] text-muted-soft mt-0.5 font-sans tracking-wide">座城市</span>
+            <div className="home-stat">
+              <span className="home-stat-value text-primary">{cityCount || "—"}</span>
+              <span className="home-stat-label">座城市</span>
             </div>
-            <div className="flex flex-col">
-              <span className="font-display text-2xl sm:text-3xl text-ink tabular-nums tracking-[-0.5px]">{latestDate || "—"}</span>
-              <span className="text-[11px] text-muted-soft mt-0.5 font-sans tracking-wide">最近记录</span>
+            <div className="home-stat home-stat-latest">
+              <span className="home-stat-value home-stat-date text-ink">{latestDate || "—"}</span>
+              <span className="home-stat-label">最近记录</span>
             </div>
           </div>
         </div>
