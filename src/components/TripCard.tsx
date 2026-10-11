@@ -54,5 +54,5 @@ export default function TripCard({ trip, photoCount, preview = false, media }: {
       </article>
   );
   if (preview) return <div className="trip-card group block relative rounded-lg">{content}</div>;
-  return <JourneyLink href={`/trip/${trip.slug}`} className="trip-card group block relative rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">{content}</JourneyLink>;
+  return <JourneyLink href={`/trip/${trip.slug}`} id={`trip-${trip.id}`} className="trip-card group block relative scroll-mt-36 rounded-lg lg:scroll-mt-24 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">{content}</JourneyLink>;
 }

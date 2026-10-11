@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import ts from "typescript";
+import type { ReactElement } from "react";
 import type { Trip, Education } from "../src/lib/types.ts";
 
 const require = createRequire(import.meta.url);
@@ -44,6 +45,20 @@ async function draw(trips: Trip[], education: Education[] = [], boundaries: unkn
   };
   return { ...compiledModule.exports.addJourneyLayers(leaflet, map, trips, education, boundaries, filters), moves };
 }
+
+async function tripCard(record: Trip) {
+  const source = await readFile("src/components/TripCard.tsx", "utf8");
+  const compiled = ts.transpileModule(source, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const component = { exports: {} as { default(props: { trip: Trip; photoCount: number }): ReactElement<{ id?: string; href: string }> } };
+  new Function("require", "module", "exports", compiled)((id: string) => {
+    // Inspect the card's output props without requiring a Next.js router or image runtime.
+    if (id.startsWith("@/components/")) return id;
+    if (id.startsWith("@/lib/")) return require(`../src/lib/${id.slice("@/lib/".length)}.ts`);
+    return require(id);
+  }, component, component.exports);
+  return component.exports.default({ trip: record, photoCount: 0 });
+}
+
 const trip = { id: "trip-fuzhou", title: "山水", slug: "mountains", city_name: "福州市", location: "福建省福州市", latitude: 26.08, longitude: 119.3, rating: 5, date: "2026-01-01", end_date: null } as Trip;
 const school = { ...trip, id: "school-fuzhou", degree: "本科", school: "福州大学" } as unknown as Education;
 const boundary = { type: "FeatureCollection", features: [{ type: "Feature", properties: { name: "福州市" }, geometry: { type: "Polygon", coordinates: [] } }] };
@@ -84,4 +99,18 @@ test("overseas focus uses the trip coordinates and keeps popup titles escaped", 
 test("map popup trip links keep the search context and escape query separators", async () => {
   const view = await draw([trip], [], null, new URLSearchParams("q=山水&year=2026&rating=5"));
   assert.ok(view.layers[1].popup.includes('href="/trip/mountains?q=%E5%B1%B1%E6%B0%B4&amp;rating=5"'));
+});
+
+test("map locate links target each trip's own timeline card within the same year", async () => {
+  const revisit = { ...trip, id: "trip-fuzhou-return", slug: "return-to-fuzhou", title: "重访福州", date: "2026-06-01" };
+  const view = await draw([trip, revisit], [], null, new URLSearchParams("q=其他城市&rating=1"));
+  const links = [...view.layers[1].popup.matchAll(/class="journey-popup-card__action" href="([^"]+)"/g)].map(match => match[1]);
+  assert.deepEqual(links, ["/#trip-trip-fuzhou-return", "/#trip-trip-fuzhou"]);
+  const cards = await Promise.all([tripCard(revisit), tripCard(trip)]);
+  for (const [index, href] of links.entries()) {
+    const url = new URL(href, "https://journey.example");
+    assert.equal(url.search, "", "locating must reveal the card even when the map has unrelated filters");
+    assert.equal(decodeURIComponent(url.hash.slice(1)), cards[index].props.id, "the popup anchor must exist on its corresponding timeline card");
+    assert.equal(cards[index].props.href, `/trip/${index === 0 ? "return-to-fuzhou" : "mountains"}`);
+  }
 });
