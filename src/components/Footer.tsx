@@ -22,6 +22,27 @@ export default function Footer() {
             </a>
           </div>
         </div>
+        <nav
+          aria-label="网站备案信息"
+          className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-hairline-soft pt-4 font-sans text-[11px] text-muted-soft"
+        >
+          <a
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 transition-colors hover:text-primary"
+          >
+            闽ICP备2026039173号-1
+          </a>
+          <a
+            href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=35021202001030"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 transition-colors hover:text-primary"
+          >
+            闽公网安备35021202001030号
+          </a>
+        </nav>
       </div>
     </footer>
   );
